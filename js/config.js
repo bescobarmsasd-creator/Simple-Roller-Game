@@ -32,8 +32,8 @@ var CONFIG = {
   BULLET_LIFE: 90,    // how long a bullet stays alive before disappearing
 
   // --- the player's size ----------------------------------------------
-  PLAYER_SIZE: 32,    // the player collides as a 32x32 box
-  PLAYER_RADIUS: 16,  // ...but is DRAWN as a circle this big
+  PLAYER_SIZE: 24,    // the player collides as a 24x24 box
+  PLAYER_RADIUS: 12,  // ...but is DRAWN as a circle this big
 
   // --- drawing --------------------------------------------------------
   LINE_WIDTH: 3,      // thickness of every black outline

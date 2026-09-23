@@ -17,7 +17,8 @@ var Level = {
   name: "",
   startX: 0,        // where the player begins, in pixels
   startY: 0,
-  enemies: []       // all enemy targets placed in the current level
+  enemies: [],      // all enemy targets placed in the current level
+  bots: []          // hostile bots that move and attack
 };
 
 // --- STEP 1: read the two data files ----------------------------------
@@ -47,6 +48,7 @@ Level.build = function (levelNumber) {
   Level.grid = [];
   Level.cols = level.pieces.length * CONFIG.PIECE_COLS;
   Level.enemies = [];
+  Level.bots = [];
 
   // start with 10 empty rows
   for (var row = 0; row < CONFIG.ROWS; row++) {
@@ -70,6 +72,7 @@ Level.build = function (levelNumber) {
 
   Level.findStart();
   Level.findEnemies();
+  Level.spawnBots();
 };
 
 // --- STEP 3: find the S and remember where it is ----------------------
@@ -100,6 +103,24 @@ Level.findEnemies = function () {
         });
       }
     }
+  }
+};
+
+Level.spawnBots = function () {
+  // Spawn a few mobile bots near the enemy markers.
+  for (var i = 0; i < Level.enemies.length; i++) {
+    var enemy = Level.enemies[i];
+    Level.bots.push({
+      x: enemy.x,
+      y: enemy.y - 10,
+      w: 22,
+      h: 18,
+      dir: 1,
+      speed: 0.9 + (i % 3) * 0.2,
+      oxid: Math.random() * 1000,
+      fireCooldown: 30 + i * 12,
+      alive: true
+    });
   }
 };
 

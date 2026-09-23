@@ -44,6 +44,7 @@ Draw.everything = function () {
 
   Draw.world();
   Draw.enemies();
+  Draw.bots();
   Draw.projectiles();
   Draw.player();
 
@@ -163,6 +164,48 @@ Draw.projectiles = function () {
     Draw.ctx.fillStyle = "#000000";
     Draw.ctx.beginPath();
     Draw.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    Draw.ctx.fill();
+  }
+};
+
+Draw.bots = function () {
+  for (var i = 0; i < Level.bots.length; i++) {
+    var bot = Level.bots[i];
+    if (!bot.alive) { continue; }
+    var cx = bot.x + bot.w / 2;
+    var cy = bot.y + bot.h / 2;
+
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.beginPath();
+    Draw.ctx.ellipse(cx, cy, bot.w / 2, bot.h / 2, 0, 0, Math.PI * 2);
+    Draw.ctx.fill();
+
+    Draw.ctx.fillStyle = "#ffffff";
+    Draw.ctx.fillRect(bot.x + 5, bot.y + 6, 4, 4);
+    Draw.ctx.fillRect(bot.x + bot.w - 9, bot.y + 6, 4, 4);
+
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.fillRect(bot.x + bot.w - 2, bot.y + 5, 8, 3);
+
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.beginPath();
+    Draw.ctx.moveTo(bot.x - 6, bot.y + 5);
+    Draw.ctx.lineTo(bot.x - 14, bot.y - 4);
+    Draw.ctx.lineTo(bot.x - 6, bot.y + 10);
+    Draw.ctx.fill();
+
+    Draw.ctx.beginPath();
+    Draw.ctx.moveTo(bot.x + bot.w + 6, bot.y + 5);
+    Draw.ctx.lineTo(bot.x + bot.w + 14, bot.y - 4);
+    Draw.ctx.lineTo(bot.x + bot.w + 6, bot.y + 10);
+    Draw.ctx.fill();
+  }
+
+  for (var j = 0; j < Player.botProjectiles.length; j++) {
+    var shot = Player.botProjectiles[j];
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.beginPath();
+    Draw.ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
     Draw.ctx.fill();
   }
 };

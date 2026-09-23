@@ -17,6 +17,7 @@ var Player = {
   facing: 1,       // which way the player is aiming
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
+  botProjectiles: [],
   jumpHeld: false, // was jump held last frame?
   jumpCount: 0,    // how many jumps have been used in this jump cycle
   canDoubleJump: true,
@@ -34,6 +35,7 @@ Player.reset = function () {
   Player.facing = 1;
   Player.fireCooldown = 0;
   Player.projectiles = [];
+  Player.botProjectiles = [];
   Player.jumpHeld = false;
   Player.jumpCount = 0;
   Player.canDoubleJump = true;
@@ -69,22 +71,85 @@ Player.updateProjectiles = function () {
       continue;
     }
 
-    for (var e = Level.enemies.length - 1; e >= 0; e--) {
-      var enemy = Level.enemies[e];
+    for (var e = Level.bots.length - 1; e >= 0; e--) {
+      var bot = Level.bots[e];
+      if (!bot.alive) { continue; }
       if (Collide.boxesOverlap(
         bullet.x - bullet.radius,
         bullet.y - bullet.radius,
         bullet.radius * 2,
         bullet.radius * 2,
-        enemy.x,
-        enemy.y,
-        enemy.w,
-        enemy.h
+        bot.x,
+        bot.y,
+        bot.w,
+        bot.h
       )) {
-        Level.enemies.splice(e, 1);
+        bot.alive = false;
         Player.projectiles.splice(i, 1);
         break;
       }
+    }
+  }
+};
+
+Player.updateBots = function () {
+  for (var i = 0; i < Level.bots.length; i++) {
+    var bot = Level.bots[i];
+    if (!bot.alive) { continue; }
+
+    var dx = Player.x - bot.x;
+    var dy = Player.y - bot.y;
+    var distX = Math.abs(dx);
+    var distY = Math.abs(dy);
+
+    bot.x = bot.x + Math.sign(dx || 1) * bot.speed;
+    bot.y = bot.y + Math.sin((Date.now() / 180) + i) * 0.7 + Math.sign(dy || 1) * 0.2;
+
+    bot.fireCooldown = (bot.fireCooldown || 0) - 1;
+    if (distX < 260 && distY < 180 && bot.fireCooldown <= 0) {
+      var dirX = dx === 0 ? 1 : dx / Math.sqrt(dx * dx + dy * dy);
+      var dirY = dy === 0 ? 0 : dy / Math.sqrt(dx * dx + dy * dy);
+      Player.botProjectiles.push({
+        x: bot.x + bot.w / 2,
+        y: bot.y + bot.h / 2,
+        vx: dirX * 4,
+        vy: dirY * 4,
+        radius: 4,
+        life: 0,
+        maxLife: 120
+      });
+      bot.fireCooldown = 80;
+    }
+
+    if (bot.x < 0) { bot.x = 0; }
+    if (bot.x + bot.w > Level.pixelWidth()) { bot.x = Level.pixelWidth() - bot.w; }
+    if (bot.y < 20) { bot.y = 20; }
+    if (bot.y + bot.h > CONFIG.CANVAS_H - 20) { bot.y = CONFIG.CANVAS_H - 20 - bot.h; }
+  }
+
+  for (var j = Player.botProjectiles.length - 1; j >= 0; j--) {
+    var shot = Player.botProjectiles[j];
+    shot.x = shot.x + shot.vx;
+    shot.y = shot.y + shot.vy;
+    shot.life = shot.life + 1;
+
+    if (shot.life > shot.maxLife || shot.x < -20 || shot.x > Level.pixelWidth() + 20 || shot.y < -20 || shot.y > CONFIG.CANVAS_H + 20) {
+      Player.botProjectiles.splice(j, 1);
+      continue;
+    }
+
+    if (Collide.boxesOverlap(
+      shot.x - shot.radius,
+      shot.y - shot.radius,
+      shot.radius * 2,
+      shot.radius * 2,
+      Player.x,
+      Player.y,
+      CONFIG.PLAYER_SIZE,
+      CONFIG.PLAYER_SIZE
+    )) {
+      Player.botProjectiles.splice(j, 1);
+      Player.vy = -10;
     }
   }
 };
@@ -127,11 +192,13 @@ Player.update = function () {
     Player.onGround = false;
     Player.jumpCount = 1;
     Player.canDoubleJump = true;
+    Player.jumpHeld = false;
   } else if (jumpPressedThisFrame && !Player.onGround && Player.jumpCount < 2 && Player.doubleJumpCooldown <= 0) {
     Player.vy = -CONFIG.DOUBLE_JUMP_POWER;
     Player.jumpCount = 2;
     Player.canDoubleJump = false;
     Player.doubleJumpCooldown = CONFIG.DOUBLE_JUMP_COOLDOWN;
+    Player.jumpHeld = false;
   }
 
   // --- 3. gravity pulls down every single frame -----------------------
@@ -175,6 +242,7 @@ Player.update = function () {
 
   Player.jumpHeld = Input.jump;
   Player.updateProjectiles();
+  Player.updateBots();
 };
 
 // Did the player just touch something deadly?
@@ -183,6 +251,13 @@ Player.isDead = function () {
   if (Collide.hitsSpike(Player.x, Player.y, size, size)) { return true; }
   if (Collide.hitsLava(Player.x, Player.y, size, size)) { return true; }
   if (Player.y > CONFIG.CANVAS_H + 200) { return true; }   // fell off the world
+  for (var i = 0; i < Level.bots.length; i++) {
+    var bot = Level.bots[i];
+    if (!bot.alive) { continue; }
+    if (Collide.boxesOverlap(Player.x, Player.y, size, size, bot.x, bot.y, bot.w, bot.h)) {
+      return true;
+    }
+  }
   return false;
 };
 
