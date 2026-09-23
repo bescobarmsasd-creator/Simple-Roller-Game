@@ -18,6 +18,7 @@ var Player = {
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
   jumpHeld: false, // was jump held last frame?
+  canDoubleJump: true,
   doubleJumpCooldown: 0 // how long until another double jump is available
 };
 
@@ -33,6 +34,7 @@ Player.reset = function () {
   Player.fireCooldown = 0;
   Player.projectiles = [];
   Player.jumpHeld = false;
+  Player.canDoubleJump = true;
   Player.doubleJumpCooldown = 0;
 };
 
@@ -108,6 +110,7 @@ Player.update = function () {
   Player.fireCooldown = Math.max(0, Player.fireCooldown - 1);
 
   if (Player.onGround) {
+    Player.canDoubleJump = true;
     Player.doubleJumpCooldown = 0;
   }
   if (Player.doubleJumpCooldown > 0) {
@@ -120,8 +123,9 @@ Player.update = function () {
     Player.onGround = false;
   }
 
-  if (jumpPressedThisFrame && !Player.onGround && Player.doubleJumpCooldown <= 0) {
+  if (jumpPressedThisFrame && !Player.onGround && Player.canDoubleJump && Player.doubleJumpCooldown <= 0) {
     Player.vy = -CONFIG.DOUBLE_JUMP_POWER;
+    Player.canDoubleJump = false;
     Player.doubleJumpCooldown = CONFIG.DOUBLE_JUMP_COOLDOWN;
   }
 
@@ -158,6 +162,10 @@ Player.update = function () {
 
   // --- 6. keep the player inside the left edge of the world -----------
   if (Player.x < 0) { Player.x = 0; }
+
+  if (Player.onGround) {
+    Player.canDoubleJump = true;
+  }
 
   Player.jumpHeld = Input.jump;
   Player.updateProjectiles();

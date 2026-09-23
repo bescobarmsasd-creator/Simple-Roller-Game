@@ -23,7 +23,7 @@ var CONFIG = {
   DOUBLE_JUMP_POWER: 12,
   GRAVITY: 0.9,       // how hard the world pulls DOWN. bigger = heavier
   MAX_FALL: 16,       // fastest the player is allowed to fall
-  DOUBLE_JUMP_COOLDOWN: 60,
+  DOUBLE_JUMP_COOLDOWN: 90,
 
   // --- shooting --------------------------------------------------------
   SHOOT_COOLDOWN: 8,  // frames between shots

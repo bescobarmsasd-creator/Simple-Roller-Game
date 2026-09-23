@@ -206,6 +206,30 @@ Draw.player = function () {
   ctx.fill();
   ctx.stroke();
 
+  // a gun mounted on the front of the player
+  var gunLength = 18;
+  var gunWidth = 7;
+  var gunX = centerX + Player.facing * (r + 8);
+  var gunY = centerY;
+  var muzzleX = gunX + Player.facing * gunLength;
+  var muzzleY = gunY;
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(
+    Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+    gunY - gunWidth / 2,
+    gunLength,
+    gunWidth
+  );
+
+  // muzzle flash when recently fired
+  if (Player.fireCooldown > 0 && Player.fireCooldown < CONFIG.SHOOT_COOLDOWN - 2) {
+    ctx.fillStyle = "#ffcf5a";
+    ctx.beginPath();
+    ctx.arc(muzzleX, muzzleY, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // the off-center dot. its position depends on how far we have rolled.
   var dotX = centerX + Math.cos(Player.angle) * r * CONFIG.DOT_DISTANCE;
   var dotY = centerY + Math.sin(Player.angle) * r * CONFIG.DOT_DISTANCE;
