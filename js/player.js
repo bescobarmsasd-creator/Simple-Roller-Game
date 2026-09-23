@@ -18,6 +18,7 @@ var Player = {
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
   jumpHeld: false, // was jump held last frame?
+  jumpCount: 0,    // how many jumps have been used in this jump cycle
   canDoubleJump: true,
   doubleJumpCooldown: 0 // how long until another double jump is available
 };
@@ -34,6 +35,7 @@ Player.reset = function () {
   Player.fireCooldown = 0;
   Player.projectiles = [];
   Player.jumpHeld = false;
+  Player.jumpCount = 0;
   Player.canDoubleJump = true;
   Player.doubleJumpCooldown = 0;
 };
@@ -110,6 +112,7 @@ Player.update = function () {
   Player.fireCooldown = Math.max(0, Player.fireCooldown - 1);
 
   if (Player.onGround) {
+    Player.jumpCount = 0;
     Player.canDoubleJump = true;
     Player.doubleJumpCooldown = 0;
   }
@@ -117,14 +120,16 @@ Player.update = function () {
     Player.doubleJumpCooldown = Player.doubleJumpCooldown - 1;
   }
 
-  // --- 2. jump, but only if we are standing on something --------------
+  // A true double jump means exactly two jumps total in one air cycle:
+  // one from the ground, then one extra while airborne.
   if (jumpPressedThisFrame && Player.onGround) {
     Player.vy = -CONFIG.JUMP_POWER;   // negative is UP
     Player.onGround = false;
-  }
-
-  if (jumpPressedThisFrame && !Player.onGround && Player.canDoubleJump && Player.doubleJumpCooldown <= 0) {
+    Player.jumpCount = 1;
+    Player.canDoubleJump = true;
+  } else if (jumpPressedThisFrame && !Player.onGround && Player.jumpCount < 2 && Player.doubleJumpCooldown <= 0) {
     Player.vy = -CONFIG.DOUBLE_JUMP_POWER;
+    Player.jumpCount = 2;
     Player.canDoubleJump = false;
     Player.doubleJumpCooldown = CONFIG.DOUBLE_JUMP_COOLDOWN;
   }
@@ -164,6 +169,7 @@ Player.update = function () {
   if (Player.x < 0) { Player.x = 0; }
 
   if (Player.onGround) {
+    Player.jumpCount = 0;
     Player.canDoubleJump = true;
   }
 
