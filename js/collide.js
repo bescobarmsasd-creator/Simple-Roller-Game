@@ -9,6 +9,10 @@
 
 var Collide = {};
 
+Collide.boxesOverlap = function (ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+};
+
 // Which grid squares does this box overlap?
 // Returns a list of { col: , row: } objects.
 Collide.squaresUnder = function (x, y, width, height) {
@@ -40,6 +44,15 @@ Collide.hitsSpike = function (x, y, width, height) {
   var squares = Collide.squaresUnder(x, y, width, height);
   for (var i = 0; i < squares.length; i++) {
     if (Level.isSpike(squares[i].col, squares[i].row)) { return true; }
+  }
+  return false;
+};
+
+// Is this box touching a lava tile?
+Collide.hitsLava = function (x, y, width, height) {
+  var squares = Collide.squaresUnder(x, y, width, height);
+  for (var i = 0; i < squares.length; i++) {
+    if (Level.isLava(squares[i].col, squares[i].row)) { return true; }
   }
   return false;
 };

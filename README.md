@@ -1,8 +1,8 @@
 # ROLLER - the base game
 
 A circle with an off-center dot rolls through a black and white world.
-It can move, jump, land on platforms, and die on spikes. It wins by
-touching the flag.
+It can move, jump, land on platforms, and die on spikes, lava, or a fall.
+It wins by touching the flag.
 
 That is the whole game. Everything else is yours to add.
 
@@ -55,7 +55,9 @@ Each picture is 8 columns wide and 10 rows tall:
 
 - `.` is empty air
 - `#` is a solid block
-- `^` is a spike
+- `^` is an upward spike
+- `v` is a downward ceiling spike
+- `~` is lava
 - `S` is where the player starts
 - `F` is the finish
 

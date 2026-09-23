@@ -3,28 +3,42 @@
 
   "levels": [
     {
-      "name": "Level 1 - Warm Up",
+      "name": "Level 1 - Trial by Fire",
       "pieces": [
         "start",
-        "flat",
+        "spikes",
+        "gap",
+        "lava",
+        "step",
+        "enemy",
+        "spikepit",
+        "platform",
+        "ceiling",
+        "gap",
+        "stairs",
         "gap",
         "flat",
         "spikes",
-        "platform",
-        "stairs",
         "finish"
       ]
     },
     {
-      "name": "Level 2 - Watch Your Step",
+      "name": "Level 2 - No Margin",
       "pieces": [
         "start",
-        "spikes",
+        "ceiling",
         "gap",
+        "platform",
+        "enemy",
+        "lava",
         "step",
         "spikepit",
-        "platform",
         "gap",
+        "stairs",
+        "ceiling",
+        "gap",
+        "platform",
+        "spikes",
         "flat",
         "finish"
       ]

@@ -43,9 +43,12 @@ Draw.everything = function () {
   ctx.translate(-Draw.cameraX, 0);
 
   Draw.world();
+  Draw.enemies();
+  Draw.projectiles();
   Draw.player();
 
   ctx.restore();
+  Draw.doubleJumpBar();
 };
 
 // Draw every grid square that is currently on screen.
@@ -65,6 +68,8 @@ Draw.world = function () {
 
       if (here === "#") { Draw.block(x, y, size); }
       if (here === "^") { Draw.spike(x, y, size); }
+      if (here === "v") { Draw.spikeDown(x, y, size); }
+      if (here === "~") { Draw.lava(x, y, size); }
       if (here === "F") { Draw.finish(x, y, size); }
     }
   }
@@ -95,6 +100,34 @@ Draw.spike = function (x, y, size) {
   ctx.fill();
 };
 
+// A downward-facing spike hanging from the ceiling.
+Draw.spikeDown = function (x, y, size) {
+  var ctx = Draw.ctx;
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size / 2, y + size);
+  ctx.closePath();
+  ctx.fill();
+};
+
+// Lava is a bright, visibly dangerous floor tile.
+Draw.lava = function (x, y, size) {
+  var ctx = Draw.ctx;
+  ctx.fillStyle = "#ff5a1f";
+  ctx.fillRect(x, y, size, size);
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = CONFIG.LINE_WIDTH;
+  ctx.strokeRect(x + CONFIG.LINE_WIDTH / 2,
+                 y + CONFIG.LINE_WIDTH / 2,
+                 size - CONFIG.LINE_WIDTH,
+                 size - CONFIG.LINE_WIDTH);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(x + 8, y + 12, 8, 3);
+  ctx.fillRect(x + 24, y + 22, 8, 3);
+};
+
 // The finish: a black pole with a flag on it.
 Draw.finish = function (x, y, size) {
   var ctx = Draw.ctx;
@@ -106,6 +139,54 @@ Draw.finish = function (x, y, size) {
   ctx.lineTo(x + size / 2 + 2, y + 20);
   ctx.closePath();
   ctx.fill();
+};
+
+// Enemies are little black squares with a glowing eye on them.
+Draw.enemies = function () {
+  for (var i = 0; i < Level.enemies.length; i++) {
+    var enemy = Level.enemies[i];
+    var x = enemy.x;
+    var y = enemy.y;
+    var size = Math.min(enemy.w, enemy.h);
+
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.fillRect(x, y, size, size);
+    Draw.ctx.fillStyle = "#ffffff";
+    Draw.ctx.fillRect(x + 6, y + 8, 6, 6);
+    Draw.ctx.fillRect(x + size - 12, y + 8, 6, 6);
+  }
+};
+
+Draw.projectiles = function () {
+  for (var i = 0; i < Player.projectiles.length; i++) {
+    var b = Player.projectiles[i];
+    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.beginPath();
+    Draw.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    Draw.ctx.fill();
+  }
+};
+
+Draw.doubleJumpBar = function () {
+  var ctx = Draw.ctx;
+  var x = 20;
+  var y = 18;
+  var w = 140;
+  var h = 12;
+  var ready = Player.doubleJumpCooldown <= 0 ? 1 : 1 - Player.doubleJumpCooldown / CONFIG.DOUBLE_JUMP_COOLDOWN;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(x + 3, y + 3, (w - 6) * ready, h - 6);
+
+  ctx.fillStyle = "#000000";
+  ctx.font = "12px sans-serif";
+  ctx.fillText("Double Jump", x + 2, y - 5);
 };
 
 // The player: a white circle with a black outline and one off-center

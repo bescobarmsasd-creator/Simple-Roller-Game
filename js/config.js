@@ -18,10 +18,18 @@ var CONFIG = {
   CANVAS_H: 400,
 
   // --- how the player moves -------------------------------------------
-  MOVE_SPEED: 4,      // pixels per frame left and right
-  JUMP_POWER: 15,     // how hard the jump pushes UP. bigger = higher
-  GRAVITY: 0.8,       // how hard the world pulls DOWN. bigger = heavier
+  MOVE_SPEED: 3,      // pixels per frame left and right
+  JUMP_POWER: 13,     // how hard the jump pushes UP. bigger = higher
+  DOUBLE_JUMP_POWER: 12,
+  GRAVITY: 0.9,       // how hard the world pulls DOWN. bigger = heavier
   MAX_FALL: 16,       // fastest the player is allowed to fall
+  DOUBLE_JUMP_COOLDOWN: 60,
+
+  // --- shooting --------------------------------------------------------
+  SHOOT_COOLDOWN: 8,  // frames between shots
+  BULLET_SPEED: 10,   // pixels per frame
+  BULLET_SIZE: 6,     // bullet diameter
+  BULLET_LIFE: 90,    // how long a bullet stays alive before disappearing
 
   // --- the player's size ----------------------------------------------
   PLAYER_SIZE: 32,    // the player collides as a 32x32 box
