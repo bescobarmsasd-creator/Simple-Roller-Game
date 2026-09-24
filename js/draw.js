@@ -172,41 +172,48 @@ Draw.bots = function () {
   for (var i = 0; i < Level.bots.length; i++) {
     var bot = Level.bots[i];
     if (!bot.alive) { continue; }
-    var cx = bot.x + bot.w / 2;
-    var cy = bot.y + bot.h / 2;
+    var ctx = Draw.ctx;
+    var centerX = bot.x + bot.w / 2;
+    var centerY = bot.y + bot.h / 2;
+    var aimX = Player.x + CONFIG.PLAYER_SIZE / 2 - centerX;
+    var aimY = Player.y + CONFIG.PLAYER_SIZE / 2 - centerY;
+    var aimLength = Math.sqrt(aimX * aimX + aimY * aimY) || 1;
 
-    Draw.ctx.fillStyle = "#000000";
-    Draw.ctx.beginPath();
-    Draw.ctx.ellipse(cx, cy, bot.w / 2, bot.h / 2, 0, 0, Math.PI * 2);
-    Draw.ctx.fill();
+    // tracks
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(bot.x - 3, bot.y + bot.h - 5, bot.w + 6, 8);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(bot.x + 2, bot.y + bot.h - 3, 5, 4);
+    ctx.fillRect(bot.x + bot.w - 7, bot.y + bot.h - 3, 5, 4);
 
-    Draw.ctx.fillStyle = "#ffffff";
-    Draw.ctx.fillRect(bot.x + 5, bot.y + 6, 4, 4);
-    Draw.ctx.fillRect(bot.x + bot.w - 9, bot.y + 6, 4, 4);
+    // tank body and turret
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(bot.x, bot.y + 5, bot.w, bot.h - 7);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(bot.x + 5, bot.y + 9, 5, 4);
+    ctx.fillRect(bot.x + bot.w - 10, bot.y + 9, 5, 4);
+    ctx.beginPath();
+    ctx.arc(centerX, bot.y + 7, 8, 0, Math.PI * 2);
+    ctx.fill();
 
-    Draw.ctx.fillStyle = "#000000";
-    Draw.ctx.fillRect(bot.x + bot.w - 2, bot.y + 5, 8, 3);
-
-    Draw.ctx.fillStyle = "#000000";
-    Draw.ctx.beginPath();
-    Draw.ctx.moveTo(bot.x - 6, bot.y + 5);
-    Draw.ctx.lineTo(bot.x - 14, bot.y - 4);
-    Draw.ctx.lineTo(bot.x - 6, bot.y + 10);
-    Draw.ctx.fill();
-
-    Draw.ctx.beginPath();
-    Draw.ctx.moveTo(bot.x + bot.w + 6, bot.y + 5);
-    Draw.ctx.lineTo(bot.x + bot.w + 14, bot.y - 4);
-    Draw.ctx.lineTo(bot.x + bot.w + 6, bot.y + 10);
-    Draw.ctx.fill();
+    // cannon points toward the player.
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(centerX, bot.y + 7);
+    ctx.lineTo(centerX + aimX / aimLength * 22, bot.y + 7 + aimY / aimLength * 22);
+    ctx.stroke();
   }
 
   for (var j = 0; j < Player.botProjectiles.length; j++) {
     var shot = Player.botProjectiles[j];
-    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.fillStyle = "#ff5a1f";
     Draw.ctx.beginPath();
     Draw.ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
     Draw.ctx.fill();
+    Draw.ctx.strokeStyle = "#000000";
+    Draw.ctx.lineWidth = 2;
+    Draw.ctx.stroke();
   }
 };
 
@@ -232,27 +239,42 @@ Draw.doubleJumpBar = function () {
   ctx.fillText("Double Jump", x + 2, y - 5);
 };
 
-// The player: a white circle with a black outline and one off-center
-// black dot, so you can see it roll.
+// The player tank, drawn over the same collision box as the old circle.
 Draw.player = function () {
   var ctx = Draw.ctx;
-  var r = CONFIG.PLAYER_RADIUS;
   var centerX = Player.x + CONFIG.PLAYER_SIZE / 2;
   var centerY = Player.y + CONFIG.PLAYER_SIZE / 2;
 
-  // the circle
+  // tracks and wheels
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(Player.x - 2, Player.y + 15, CONFIG.PLAYER_SIZE + 4, 8);
   ctx.fillStyle = "#ffffff";
+  ctx.fillRect(Player.x + 2, Player.y + 17, 5, 4);
+  ctx.fillRect(Player.x + CONFIG.PLAYER_SIZE - 7, Player.y + 17, 5, 4);
+
+  // tank body
+  ctx.fillStyle = "#5f756b";
   ctx.strokeStyle = "#000000";
   ctx.lineWidth = CONFIG.LINE_WIDTH;
+  ctx.fillRect(Player.x, Player.y + 5, CONFIG.PLAYER_SIZE, 13);
+  ctx.strokeRect(
+    Player.x + CONFIG.LINE_WIDTH / 2,
+    Player.y + 5 + CONFIG.LINE_WIDTH / 2,
+    CONFIG.PLAYER_SIZE - CONFIG.LINE_WIDTH,
+    13 - CONFIG.LINE_WIDTH
+  );
+
+  // turret
+  ctx.fillStyle = "#83998e";
   ctx.beginPath();
-  ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+  ctx.arc(centerX, Player.y + 7, 7, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // a gun mounted on the front of the player
+  // cannon
   var gunLength = 18;
   var gunWidth = 7;
-  var gunX = centerX + Player.facing * (r + 8);
+  var gunX = centerX + Player.facing * 7;
   var gunY = centerY;
   var muzzleX = gunX + Player.facing * gunLength;
   var muzzleY = gunY;
@@ -265,6 +287,21 @@ Draw.player = function () {
     gunWidth
   );
 
+  for (var i = 0; i < Player.smokePuffs.length; i++) {
+    var puff = Player.smokePuffs[i];
+    var progress = puff.life / puff.maxLife;
+    ctx.fillStyle = "rgba(110, 110, 110, " + (1 - progress) * 0.7 + ")";
+    ctx.beginPath();
+    ctx.arc(
+      puff.x - Player.facing * progress * 10,
+      puff.y - progress * 5,
+      3 + progress * 7,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+
   // muzzle flash when recently fired
   if (Player.fireCooldown > 0 && Player.fireCooldown < CONFIG.SHOOT_COOLDOWN - 2) {
     ctx.fillStyle = "#ffcf5a";
@@ -273,12 +310,4 @@ Draw.player = function () {
     ctx.fill();
   }
 
-  // the off-center dot. its position depends on how far we have rolled.
-  var dotX = centerX + Math.cos(Player.angle) * r * CONFIG.DOT_DISTANCE;
-  var dotY = centerY + Math.sin(Player.angle) * r * CONFIG.DOT_DISTANCE;
-
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
-  ctx.fill();
 };

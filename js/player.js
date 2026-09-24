@@ -17,7 +17,9 @@ var Player = {
   facing: 1,       // which way the player is aiming
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
+  smokePuffs: [],  // short-lived smoke from the player's cannon
   botProjectiles: [],
+  hitByTankShot: false,
   jumpHeld: false, // was jump held last frame?
   jumpCount: 0,    // how many jumps have been used in this jump cycle
   canDoubleJump: true,
@@ -35,7 +37,9 @@ Player.reset = function () {
   Player.facing = 1;
   Player.fireCooldown = 0;
   Player.projectiles = [];
+  Player.smokePuffs = [];
   Player.botProjectiles = [];
+  Player.hitByTankShot = false;
   Player.jumpHeld = false;
   Player.jumpCount = 0;
   Player.canDoubleJump = true;
@@ -53,6 +57,21 @@ Player.shoot = function () {
     maxLife: CONFIG.BULLET_LIFE
   };
   Player.projectiles.push(bullet);
+  Player.smokePuffs.push({
+    x: bullet.x + Player.facing * (CONFIG.BULLET_SIZE / 2 + 3),
+    y: bullet.y + CONFIG.BULLET_SIZE / 2,
+    life: 0,
+    maxLife: 18
+  });
+};
+
+Player.updateSmoke = function () {
+  for (var i = Player.smokePuffs.length - 1; i >= 0; i--) {
+    Player.smokePuffs[i].life = Player.smokePuffs[i].life + 1;
+    if (Player.smokePuffs[i].life > Player.smokePuffs[i].maxLife) {
+      Player.smokePuffs.splice(i, 1);
+    }
+  }
 };
 
 Player.updateProjectiles = function () {
@@ -149,7 +168,7 @@ Player.updateBots = function () {
       CONFIG.PLAYER_SIZE
     )) {
       Player.botProjectiles.splice(j, 1);
-      Player.vy = -10;
+      Player.hitByTankShot = true;
     }
   }
 };
@@ -181,11 +200,7 @@ Player.update = function () {
     Player.canDoubleJump = true;
     Player.doubleJumpCooldown = 0;
   }
-  if (Player.doubleJumpCooldown > 0) {
-    Player.doubleJumpCooldown = Player.doubleJumpCooldown - 1;
-  }
-
-  // A true double jump means exactly two jumps total in one air cycle:
+  // A double jump means exactly two jumps total in one air cycle:
   // one from the ground, then one extra while airborne.
   if (jumpPressedThisFrame && Player.onGround) {
     Player.vy = -CONFIG.JUMP_POWER;   // negative is UP
@@ -193,11 +208,10 @@ Player.update = function () {
     Player.jumpCount = 1;
     Player.canDoubleJump = true;
     Player.jumpHeld = false;
-  } else if (jumpPressedThisFrame && !Player.onGround && Player.jumpCount < 2 && Player.doubleJumpCooldown <= 0) {
+  } else if (jumpPressedThisFrame && !Player.onGround && Player.canDoubleJump) {
     Player.vy = -CONFIG.DOUBLE_JUMP_POWER;
     Player.jumpCount = 2;
     Player.canDoubleJump = false;
-    Player.doubleJumpCooldown = CONFIG.DOUBLE_JUMP_COOLDOWN;
     Player.jumpHeld = false;
   }
 
@@ -242,12 +256,14 @@ Player.update = function () {
 
   Player.jumpHeld = Input.jump;
   Player.updateProjectiles();
+  Player.updateSmoke();
   Player.updateBots();
 };
 
 // Did the player just touch something deadly?
 Player.isDead = function () {
   var size = CONFIG.PLAYER_SIZE;
+  if (Player.hitByTankShot) { return true; }
   if (Collide.hitsSpike(Player.x, Player.y, size, size)) { return true; }
   if (Collide.hitsLava(Player.x, Player.y, size, size)) { return true; }
   if (Player.y > CONFIG.CANVAS_H + 200) { return true; }   // fell off the world
