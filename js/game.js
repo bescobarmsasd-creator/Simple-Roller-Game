@@ -31,24 +31,36 @@ Game.update = function () {
 
   // R always restarts, no matter what mode we are in.
   if (Input.restart) {
-    Game.startLevel(Game.levelNumber);
+    if (Game.mode === "won") {
+      Game.startLevel((Game.levelNumber + 1) % Level.levels.length);
+    } else {
+      Game.startLevel(Game.levelNumber);
+    }
     return;
   }
 
-  // If we are not playing, nothing moves. We just wait for R.
-  if (Game.mode !== "playing") { return; }
+  // The death animation keeps playing while the game waits for R.
+  if (Game.mode !== "playing") {
+    if (Game.mode === "dead") { Player.updateExplosion(); }
+    return;
+  }
 
   Player.update();
 
   if (Player.isDead()) {
     Game.mode = "dead";
+    Player.startExplosion();
     Game.showMessage("You hit something. Press R to try again.");
     return;
   }
 
   if (Player.hasWon()) {
     Game.mode = "won";
-    Game.showMessage("You made it. Press R to play again.");
+    if (Game.levelNumber + 1 < Level.levels.length) {
+      Game.showMessage("Level complete. Press R for the next level.");
+    } else {
+      Game.showMessage("You beat all 50 levels. Press R to play again.");
+    }
     return;
   }
 };

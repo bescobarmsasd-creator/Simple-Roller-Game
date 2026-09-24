@@ -47,6 +47,7 @@ Draw.everything = function () {
   Draw.bots();
   Draw.projectiles();
   Draw.player();
+  Draw.explosion();
 
   ctx.restore();
   Draw.doubleJumpBar();
@@ -74,6 +75,38 @@ Draw.world = function () {
       if (here === "F") { Draw.finish(x, y, size); }
     }
   }
+};
+
+Draw.explosion = function () {
+  if (!Player.explosion) { return; }
+
+  var ctx = Draw.ctx;
+  var explosion = Player.explosion;
+  var progress = explosion.life / explosion.maxLife;
+  var fade = 1 - progress;
+  var outerRadius = 10 + progress * 30;
+
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = "#ff5a1f";
+  ctx.beginPath();
+  ctx.arc(explosion.x, explosion.y, outerRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffcf5a";
+  ctx.beginPath();
+  ctx.arc(explosion.x, explosion.y, outerRadius * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#000000";
+  for (var i = 0; i < 8; i++) {
+    var angle = i * Math.PI / 4;
+    var distance = progress * 42;
+    var debrisX = explosion.x + Math.cos(angle) * distance;
+    var debrisY = explosion.y + Math.sin(angle) * distance;
+    ctx.fillRect(debrisX - 3, debrisY - 3, 6, 6);
+  }
+  ctx.restore();
 };
 
 // A solid block: white inside, black outline.

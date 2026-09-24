@@ -18,6 +18,7 @@ var Player = {
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
   smokePuffs: [],  // short-lived smoke from the player's cannon
+  explosion: null,
   botProjectiles: [],
   hitByTankShot: false,
   jumpHeld: false, // was jump held last frame?
@@ -38,6 +39,7 @@ Player.reset = function () {
   Player.fireCooldown = 0;
   Player.projectiles = [];
   Player.smokePuffs = [];
+  Player.explosion = null;
   Player.botProjectiles = [];
   Player.hitByTankShot = false;
   Player.jumpHeld = false;
@@ -71,6 +73,23 @@ Player.updateSmoke = function () {
     if (Player.smokePuffs[i].life > Player.smokePuffs[i].maxLife) {
       Player.smokePuffs.splice(i, 1);
     }
+  }
+};
+
+Player.startExplosion = function () {
+  Player.explosion = {
+    x: Player.x + CONFIG.PLAYER_SIZE / 2,
+    y: Player.y + CONFIG.PLAYER_SIZE / 2,
+    life: 0,
+    maxLife: 36
+  };
+};
+
+Player.updateExplosion = function () {
+  if (!Player.explosion) { return; }
+  Player.explosion.life = Player.explosion.life + 1;
+  if (Player.explosion.life > Player.explosion.maxLife) {
+    Player.explosion = null;
   }
 };
 
