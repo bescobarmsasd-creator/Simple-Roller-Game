@@ -1,8 +1,7 @@
-# ROLLER - the base game
+# ROLLER - the colorful platform game
 
-A circle with an off-center dot rolls through a black and white world.
-It can move, jump, land on platforms, and die on spikes, lava, or a fall.
-It wins by touching the flag.
+A small tank rolls through a bright arcade world. Move, jump, and shoot
+through platforms, spikes, and lava, then reach the finish flag.
 
 That is the whole game. Everything else is yours to add.
 

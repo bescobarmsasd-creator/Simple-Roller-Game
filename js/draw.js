@@ -5,13 +5,25 @@
    If you want to change how the game LOOKS, this is the only file you
    need. If you want to change how it BEHAVES, this is the wrong file.
 
-   The whole game is black and white on purpose. That is your room to
-   work in.
+    The game uses a bright arcade palette; visual changes live here.
    ===================================================================== */
 
 var Draw = {
   canvas: null,
   ctx: null,
+  colors: {
+    sky: "#c7f2eb",
+    dark: "#173b45",
+    block: "#168f86",
+    blockHighlight: "#52c7aa",
+    spike: "#ef476f",
+    lava: "#ff7438",
+    sun: "#ffd166",
+    enemy: "#a34f86",
+    bot: "#e76f51",
+    player: "#28b67a",
+    playerHighlight: "#8ef0b5"
+  },
   cameraX: 0     // how far the view has scrolled to the right
 };
 
@@ -34,8 +46,8 @@ Draw.updateCamera = function () {
 Draw.everything = function () {
   var ctx = Draw.ctx;
 
-  // 1. wipe the screen white
-  ctx.fillStyle = "#ffffff";
+  // 1. paint the sky behind the level
+  ctx.fillStyle = Draw.colors.sky;
   ctx.fillRect(0, 0, CONFIG.CANVAS_W, CONFIG.CANVAS_H);
 
   // 2. shift everything left so the camera looks like it moved right
@@ -88,17 +100,17 @@ Draw.explosion = function () {
 
   ctx.save();
   ctx.globalAlpha = fade;
-  ctx.fillStyle = "#ff5a1f";
+  ctx.fillStyle = Draw.colors.lava;
   ctx.beginPath();
   ctx.arc(explosion.x, explosion.y, outerRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#ffcf5a";
+  ctx.fillStyle = Draw.colors.sun;
   ctx.beginPath();
   ctx.arc(explosion.x, explosion.y, outerRadius * 0.55, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.dark;
   for (var i = 0; i < 8; i++) {
     var angle = i * Math.PI / 4;
     var distance = progress * 42;
@@ -109,64 +121,73 @@ Draw.explosion = function () {
   ctx.restore();
 };
 
-// A solid block: white inside, black outline.
+// A solid block with a bright top edge.
 Draw.block = function (x, y, size) {
   var ctx = Draw.ctx;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = Draw.colors.block;
   ctx.fillRect(x, y, size, size);
-  ctx.strokeStyle = "#000000";
+  ctx.strokeStyle = Draw.colors.dark;
   ctx.lineWidth = CONFIG.LINE_WIDTH;
   ctx.strokeRect(x + CONFIG.LINE_WIDTH / 2,
                  y + CONFIG.LINE_WIDTH / 2,
                  size - CONFIG.LINE_WIDTH,
                  size - CONFIG.LINE_WIDTH);
+  ctx.fillStyle = Draw.colors.blockHighlight;
+  ctx.fillRect(x + 3, y + 3, size - 6, 3);
 };
 
-// A spike: a solid black triangle pointing up.
+// A coral hazard triangle pointing up.
 Draw.spike = function (x, y, size) {
   var ctx = Draw.ctx;
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.spike;
+  ctx.strokeStyle = Draw.colors.dark;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(x, y + size);
   ctx.lineTo(x + size / 2, y);
   ctx.lineTo(x + size, y + size);
   ctx.closePath();
   ctx.fill();
+  ctx.stroke();
 };
 
 // A downward-facing spike hanging from the ceiling.
 Draw.spikeDown = function (x, y, size) {
   var ctx = Draw.ctx;
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.spike;
+  ctx.strokeStyle = Draw.colors.dark;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x + size, y);
   ctx.lineTo(x + size / 2, y + size);
   ctx.closePath();
   ctx.fill();
+  ctx.stroke();
 };
 
 // Lava is a bright, visibly dangerous floor tile.
 Draw.lava = function (x, y, size) {
   var ctx = Draw.ctx;
-  ctx.fillStyle = "#ff5a1f";
+  ctx.fillStyle = Draw.colors.lava;
   ctx.fillRect(x, y, size, size);
-  ctx.strokeStyle = "#000000";
+  ctx.strokeStyle = Draw.colors.dark;
   ctx.lineWidth = CONFIG.LINE_WIDTH;
   ctx.strokeRect(x + CONFIG.LINE_WIDTH / 2,
                  y + CONFIG.LINE_WIDTH / 2,
                  size - CONFIG.LINE_WIDTH,
                  size - CONFIG.LINE_WIDTH);
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.sun;
   ctx.fillRect(x + 8, y + 12, 8, 3);
   ctx.fillRect(x + 24, y + 22, 8, 3);
 };
 
-// The finish: a black pole with a flag on it.
+// The finish: a dark pole with a golden flag.
 Draw.finish = function (x, y, size) {
   var ctx = Draw.ctx;
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.dark;
   ctx.fillRect(x + size / 2 - 2, y, 4, size);
+  ctx.fillStyle = Draw.colors.sun;
   ctx.beginPath();
   ctx.moveTo(x + size / 2 + 2, y + 4);
   ctx.lineTo(x + size - 4,     y + 12);
@@ -175,7 +196,7 @@ Draw.finish = function (x, y, size) {
   ctx.fill();
 };
 
-// Enemies are little black squares with a glowing eye on them.
+// Enemies are bright squares with golden eyes.
 Draw.enemies = function () {
   for (var i = 0; i < Level.enemies.length; i++) {
     var enemy = Level.enemies[i];
@@ -183,9 +204,12 @@ Draw.enemies = function () {
     var y = enemy.y;
     var size = Math.min(enemy.w, enemy.h);
 
-    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.fillStyle = Draw.colors.enemy;
     Draw.ctx.fillRect(x, y, size, size);
-    Draw.ctx.fillStyle = "#ffffff";
+    Draw.ctx.strokeStyle = Draw.colors.dark;
+    Draw.ctx.lineWidth = 2;
+    Draw.ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
+    Draw.ctx.fillStyle = Draw.colors.sun;
     Draw.ctx.fillRect(x + 6, y + 8, 6, 6);
     Draw.ctx.fillRect(x + size - 12, y + 8, 6, 6);
   }
@@ -194,10 +218,13 @@ Draw.enemies = function () {
 Draw.projectiles = function () {
   for (var i = 0; i < Player.projectiles.length; i++) {
     var b = Player.projectiles[i];
-    Draw.ctx.fillStyle = "#000000";
+    Draw.ctx.fillStyle = Draw.colors.sun;
+    Draw.ctx.strokeStyle = Draw.colors.dark;
+    Draw.ctx.lineWidth = 1;
     Draw.ctx.beginPath();
     Draw.ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
     Draw.ctx.fill();
+    Draw.ctx.stroke();
   }
 };
 
@@ -213,24 +240,28 @@ Draw.bots = function () {
     var aimLength = Math.sqrt(aimX * aimX + aimY * aimY) || 1;
 
     // tracks
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = Draw.colors.dark;
     ctx.fillRect(bot.x - 3, bot.y + bot.h - 5, bot.w + 6, 8);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = Draw.colors.playerHighlight;
     ctx.fillRect(bot.x + 2, bot.y + bot.h - 3, 5, 4);
     ctx.fillRect(bot.x + bot.w - 7, bot.y + bot.h - 3, 5, 4);
 
     // tank body and turret
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = Draw.colors.bot;
     ctx.fillRect(bot.x, bot.y + 5, bot.w, bot.h - 7);
-    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = Draw.colors.dark;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bot.x + 1, bot.y + 6, bot.w - 2, bot.h - 9);
+    ctx.fillStyle = Draw.colors.sun;
     ctx.fillRect(bot.x + 5, bot.y + 9, 5, 4);
     ctx.fillRect(bot.x + bot.w - 10, bot.y + 9, 5, 4);
     ctx.beginPath();
     ctx.arc(centerX, bot.y + 7, 8, 0, Math.PI * 2);
+    ctx.fillStyle = Draw.colors.bot;
     ctx.fill();
 
     // cannon points toward the player.
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = Draw.colors.dark;
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(centerX, bot.y + 7);
@@ -240,11 +271,11 @@ Draw.bots = function () {
 
   for (var j = 0; j < Player.botProjectiles.length; j++) {
     var shot = Player.botProjectiles[j];
-    Draw.ctx.fillStyle = "#ff5a1f";
+    Draw.ctx.fillStyle = Draw.colors.lava;
     Draw.ctx.beginPath();
     Draw.ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
     Draw.ctx.fill();
-    Draw.ctx.strokeStyle = "#000000";
+    Draw.ctx.strokeStyle = Draw.colors.dark;
     Draw.ctx.lineWidth = 2;
     Draw.ctx.stroke();
   }
@@ -256,18 +287,18 @@ Draw.doubleJumpBar = function () {
   var y = 18;
   var w = 140;
   var h = 12;
-  var ready = Player.doubleJumpCooldown <= 0 ? 1 : 1 - Player.doubleJumpCooldown / CONFIG.DOUBLE_JUMP_COOLDOWN;
+  var ready = Player.canDoubleJump ? 1 : 0;
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#d9e2dc";
   ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "#000000";
+  ctx.strokeStyle = Draw.colors.dark;
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
 
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.player;
   ctx.fillRect(x + 3, y + 3, (w - 6) * ready, h - 6);
 
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.dark;
   ctx.font = "12px sans-serif";
   ctx.fillText("Double Jump", x + 2, y - 5);
 };
@@ -279,15 +310,15 @@ Draw.player = function () {
   var centerY = Player.y + CONFIG.PLAYER_SIZE / 2;
 
   // tracks and wheels
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.dark;
   ctx.fillRect(Player.x - 2, Player.y + 15, CONFIG.PLAYER_SIZE + 4, 8);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = Draw.colors.playerHighlight;
   ctx.fillRect(Player.x + 2, Player.y + 17, 5, 4);
   ctx.fillRect(Player.x + CONFIG.PLAYER_SIZE - 7, Player.y + 17, 5, 4);
 
   // tank body
-  ctx.fillStyle = "#5f756b";
-  ctx.strokeStyle = "#000000";
+  ctx.fillStyle = Draw.colors.player;
+  ctx.strokeStyle = Draw.colors.dark;
   ctx.lineWidth = CONFIG.LINE_WIDTH;
   ctx.fillRect(Player.x, Player.y + 5, CONFIG.PLAYER_SIZE, 13);
   ctx.strokeRect(
@@ -298,7 +329,7 @@ Draw.player = function () {
   );
 
   // turret
-  ctx.fillStyle = "#83998e";
+  ctx.fillStyle = Draw.colors.playerHighlight;
   ctx.beginPath();
   ctx.arc(centerX, Player.y + 7, 7, 0, Math.PI * 2);
   ctx.fill();
@@ -312,7 +343,7 @@ Draw.player = function () {
   var muzzleX = gunX + Player.facing * gunLength;
   var muzzleY = gunY;
 
-  ctx.fillStyle = "#000000";
+  ctx.fillStyle = Draw.colors.dark;
   ctx.fillRect(
     Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
     gunY - gunWidth / 2,
@@ -323,7 +354,7 @@ Draw.player = function () {
   for (var i = 0; i < Player.smokePuffs.length; i++) {
     var puff = Player.smokePuffs[i];
     var progress = puff.life / puff.maxLife;
-    ctx.fillStyle = "rgba(110, 110, 110, " + (1 - progress) * 0.7 + ")";
+    ctx.fillStyle = "rgba(73, 137, 124, " + (1 - progress) * 0.7 + ")";
     ctx.beginPath();
     ctx.arc(
       puff.x - Player.facing * progress * 10,
@@ -337,7 +368,7 @@ Draw.player = function () {
 
   // muzzle flash when recently fired
   if (Player.fireCooldown > 0 && Player.fireCooldown < CONFIG.SHOOT_COOLDOWN - 2) {
-    ctx.fillStyle = "#ffcf5a";
+    ctx.fillStyle = Draw.colors.sun;
     ctx.beginPath();
     ctx.arc(muzzleX, muzzleY, 5, 0, Math.PI * 2);
     ctx.fill();
