@@ -19,7 +19,7 @@ var Input = {
 window.addEventListener("keydown", function (event) {
   setKey(event.key, true);
   // stop the arrow keys, space, and fire keys from scrolling the page
-  if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "f", "F", "j", "J", "x", "X"].indexOf(event.key) >= 0) {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "f", "F", "j", "J", "x", "X", "Shift", "e", "E", "k", "K"].indexOf(event.key) >= 0) {
     event.preventDefault();
   }
 });
@@ -36,6 +36,6 @@ function setKey(key, isDown) {
   if (key === "ArrowRight" || key === "d" || key === "D") { Input.right = isDown; }
   if (key === "ArrowUp"    || key === " " || key === "w" || key === "W") { Input.jump = isDown; }
   if (key === "f" || key === "F" || key === "j" || key === "J" || key === "x" || key === "X") { Input.fire = isDown; }
-  if (key === "Shift" || key === "s" || key === "S") { Input.dash = isDown; }
+  if (key === "Shift" || key === "e" || key === "E" || key === "k" || key === "K") { Input.dash = isDown; }
   if (key === "r" || key === "R") { Input.restart = isDown; }
 }

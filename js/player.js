@@ -22,6 +22,7 @@ var Player = {
   botProjectiles: [],
   hitByTankShot: false,
   jumpHeld: false, // was jump held last frame?
+  dashHeld: false,
   jumpCount: 0,    // how many jumps have been used in this jump cycle
   canDoubleJump: true,
   doubleJumpCooldown: 0, // how long until another double jump is available
@@ -45,6 +46,7 @@ Player.reset = function () {
   Player.botProjectiles = [];
   Player.hitByTankShot = false;
   Player.jumpHeld = false;
+  Player.dashHeld = false;
   Player.jumpCount = 0;
   Player.canDoubleJump = true;
   Player.doubleJumpCooldown = 0;
@@ -207,6 +209,7 @@ Player.updateBots = function () {
 Player.update = function () {
   var size = CONFIG.PLAYER_SIZE;
   var jumpPressedThisFrame = Input.jump && !Player.jumpHeld;
+  var dashPressedThisFrame = Input.dash && !Player.dashHeld;
 
   // --- 1. decide how fast to go sideways ------------------------------
   Player.vx = 0;
@@ -226,7 +229,7 @@ Player.update = function () {
   Player.fireCooldown = Math.max(0, Player.fireCooldown - 1);
 
   Player.dashCooldown = Math.max(0, Player.dashCooldown - 1);
-  if (Input.dash && Player.dashCooldown <= 0) {
+  if (dashPressedThisFrame && Player.dashCooldown <= 0) {
     Player.dashCooldown = CONFIG.DASH_COOLDOWN;
     Player.dashTimer = CONFIG.DASH_TIME;
     Player.vx = Player.facing * CONFIG.DASH_SPEED;
@@ -296,6 +299,7 @@ Player.update = function () {
   }
 
   Player.jumpHeld = Input.jump;
+  Player.dashHeld = Input.dash;
   Player.updateProjectiles();
   Player.updateSmoke();
   Player.updateBots();
