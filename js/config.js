@@ -20,10 +20,13 @@ var CONFIG = {
   // --- how the player moves -------------------------------------------
   MOVE_SPEED: 3,      // pixels per frame left and right
   JUMP_POWER: 16,     // how hard the jump pushes UP. bigger = higher
-  DOUBLE_JUMP_POWER: 12,
+  DOUBLE_JUMP_POWER: 18,
   GRAVITY: 0.9,       // how hard the world pulls DOWN. bigger = heavier
   MAX_FALL: 16,       // fastest the player is allowed to fall
   DOUBLE_JUMP_COOLDOWN: 90,
+  DASH_SPEED: 9,      // burst speed when dashing
+  DASH_TIME: 8,       // how many frames the dash lasts
+  DASH_COOLDOWN: 60,  // frames until the dash can be used again
 
   // --- shooting --------------------------------------------------------
   SHOOT_COOLDOWN: 8,  // frames between shots

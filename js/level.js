@@ -18,7 +18,8 @@ var Level = {
   startX: 0,        // where the player begins, in pixels
   startY: 0,
   enemies: [],      // all enemy targets placed in the current level
-  bots: []          // hostile bots that move and attack
+  bots: [],         // hostile bots that move and attack
+  boss: null        // the optional final boss for the level
 };
 
 // --- STEP 1: read the two data files ----------------------------------
@@ -49,6 +50,7 @@ Level.build = function (levelNumber) {
   Level.cols = level.pieces.length * CONFIG.PIECE_COLS;
   Level.enemies = [];
   Level.bots = [];
+  Level.boss = null;
 
   // start with 10 empty rows
   for (var row = 0; row < CONFIG.ROWS; row++) {
@@ -107,21 +109,44 @@ Level.findEnemies = function () {
 };
 
 Level.spawnBots = function () {
-  // Spawn a few mobile bots near the enemy markers.
+  // Spawn a couple of roaming bots around each enemy marker so the
+  // level feels more active without making the arena feel chaotic.
   for (var i = 0; i < Level.enemies.length; i++) {
     var enemy = Level.enemies[i];
-    Level.bots.push({
-      x: enemy.x,
-      y: enemy.y - 10,
-      w: 22,
-      h: 18,
-      dir: 1,
-      speed: 0.9 + (i % 3) * 0.2,
-      oxid: Math.random() * 1000,
-      fireCooldown: 30 + i * 12,
-      alive: true
-    });
+    for (var j = 0; j < 2; j++) {
+      Level.bots.push({
+        x: enemy.x + (j === 0 ? -10 : 10),
+        y: enemy.y - 10 + (j * 6),
+        w: 22,
+        h: 18,
+        dir: 1,
+        speed: 0.9 + ((i + j) % 3) * 0.2,
+        oxid: Math.random() * 1000,
+        fireCooldown: 30 + (i * 12) + (j * 18),
+        alive: true,
+        isBoss: false
+      });
+    }
   }
+
+  // A final boss lurks near the end of the stage.
+  var bossX = Math.max(200, Level.pixelWidth() - 200);
+  var bossY = 70;
+  Level.boss = {
+    x: bossX,
+    y: bossY,
+    w: 54,
+    h: 38,
+    dir: 1,
+    speed: 1.2,
+    oxid: Math.random() * 1000,
+    fireCooldown: 14,
+    alive: true,
+    isBoss: true,
+    hp: 12,
+    maxHp: 12
+  };
+  Level.bots.push(Level.boss);
 };
 
 // --- ASKING THE WORLD QUESTIONS ---------------------------------------

@@ -24,7 +24,9 @@ var Player = {
   jumpHeld: false, // was jump held last frame?
   jumpCount: 0,    // how many jumps have been used in this jump cycle
   canDoubleJump: true,
-  doubleJumpCooldown: 0 // how long until another double jump is available
+  doubleJumpCooldown: 0, // how long until another double jump is available
+  dashCooldown: 0,
+  dashTimer: 0
 };
 
 // Put the player back at the level's S square.
@@ -46,6 +48,8 @@ Player.reset = function () {
   Player.jumpCount = 0;
   Player.canDoubleJump = true;
   Player.doubleJumpCooldown = 0;
+  Player.dashCooldown = 0;
+  Player.dashTimer = 0;
 };
 
 Player.shoot = function () {
@@ -122,7 +126,14 @@ Player.updateProjectiles = function () {
         bot.w,
         bot.h
       )) {
-        bot.alive = false;
+        if (bot.isBoss) {
+          bot.hp = (bot.hp || 1) - 1;
+          if (bot.hp <= 0) {
+            bot.alive = false;
+          }
+        } else {
+          bot.alive = false;
+        }
         Player.projectiles.splice(i, 1);
         break;
       }
@@ -213,6 +224,17 @@ Player.update = function () {
     Player.fireCooldown = CONFIG.SHOOT_COOLDOWN;
   }
   Player.fireCooldown = Math.max(0, Player.fireCooldown - 1);
+
+  Player.dashCooldown = Math.max(0, Player.dashCooldown - 1);
+  if (Input.dash && Player.dashCooldown <= 0) {
+    Player.dashCooldown = CONFIG.DASH_COOLDOWN;
+    Player.dashTimer = CONFIG.DASH_TIME;
+    Player.vx = Player.facing * CONFIG.DASH_SPEED;
+  }
+  if (Player.dashTimer > 0) {
+    Player.dashTimer = Player.dashTimer - 1;
+    Player.vx = Player.facing * CONFIG.DASH_SPEED;
+  }
 
   if (Player.onGround) {
     Player.jumpCount = 0;

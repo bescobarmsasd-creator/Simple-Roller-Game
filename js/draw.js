@@ -63,6 +63,7 @@ Draw.everything = function () {
 
   ctx.restore();
   Draw.doubleJumpBar();
+  Draw.cooldownBar();
 };
 
 // Draw every grid square that is currently on screen.
@@ -247,11 +248,23 @@ Draw.bots = function () {
     ctx.fillRect(bot.x + bot.w - 7, bot.y + bot.h - 3, 5, 4);
 
     // tank body and turret
-    ctx.fillStyle = Draw.colors.bot;
-    ctx.fillRect(bot.x, bot.y + 5, bot.w, bot.h - 7);
-    ctx.strokeStyle = Draw.colors.dark;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(bot.x + 1, bot.y + 6, bot.w - 2, bot.h - 9);
+    if (bot.isBoss) {
+      ctx.fillStyle = "#7a2d9d";
+      ctx.fillRect(bot.x, bot.y + 7, bot.w, bot.h - 10);
+      ctx.strokeStyle = Draw.colors.dark;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(bot.x + 2, bot.y + 8, bot.w - 4, bot.h - 12);
+      ctx.fillStyle = Draw.colors.dark;
+      ctx.fillRect(bot.x - 2, bot.y - 14, bot.w + 4, 7);
+      ctx.fillStyle = Draw.colors.sun;
+      ctx.fillRect(bot.x + 2, bot.y - 12, (bot.w - 4) * (bot.hp / bot.maxHp), 3);
+    } else {
+      ctx.fillStyle = Draw.colors.bot;
+      ctx.fillRect(bot.x, bot.y + 5, bot.w, bot.h - 7);
+      ctx.strokeStyle = Draw.colors.dark;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bot.x + 1, bot.y + 6, bot.w - 2, bot.h - 9);
+    }
     ctx.fillStyle = Draw.colors.sun;
     ctx.fillRect(bot.x + 5, bot.y + 9, 5, 4);
     ctx.fillRect(bot.x + bot.w - 10, bot.y + 9, 5, 4);
@@ -301,6 +314,29 @@ Draw.doubleJumpBar = function () {
   ctx.fillStyle = Draw.colors.dark;
   ctx.font = "12px sans-serif";
   ctx.fillText("Double Jump", x + 2, y - 5);
+};
+
+Draw.cooldownBar = function () {
+  var ctx = Draw.ctx;
+  var x = 20;
+  var y = 42;
+  var w = 140;
+  var h = 12;
+  var ratio = Player.dashCooldown > 0 ? 1 - Player.dashCooldown / CONFIG.DASH_COOLDOWN : 1;
+  ratio = Math.max(0, Math.min(1, ratio));
+
+  ctx.fillStyle = "#d9e2dc";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = Draw.colors.dark;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+
+  ctx.fillStyle = Draw.colors.sun;
+  ctx.fillRect(x + 3, y + 3, (w - 6) * ratio, h - 6);
+
+  ctx.fillStyle = Draw.colors.dark;
+  ctx.font = "12px sans-serif";
+  ctx.fillText("Dash", x + 2, y - 5);
 };
 
 // The player tank, drawn over the same collision box as the old circle.
