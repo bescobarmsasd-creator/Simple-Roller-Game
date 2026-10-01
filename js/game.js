@@ -12,15 +12,66 @@
 var Game = {
   mode: "playing",   // "playing", "dead", or "won"
   levelNumber: 0,
-  modName: "classic"
+  modName: "classic",
+  unlockedMods: ["classic"],
+  modOrder: ["classic", "turbo", "moon", "heavy", "comet", "drift"]
+};
+
+Game.unlockMod = function (modName) {
+  if (!CONFIG.MOD_PRESETS[modName]) { return; }
+  if (Game.unlockedMods.indexOf(modName) === -1) {
+    Game.unlockedMods.push(modName);
+  }
+};
+
+Game.syncModSelect = function () {
+  var modSelect = document.getElementById("mod-select");
+  if (!modSelect) { return; }
+
+  modSelect.innerHTML = "";
+  for (var i = 0; i < Game.modOrder.length; i++) {
+    var modName = Game.modOrder[i];
+    if (Game.unlockedMods.indexOf(modName) === -1) { continue; }
+    var option = document.createElement("option");
+    option.value = modName;
+    option.textContent = CONFIG.MOD_PRESETS[modName].label;
+    if (modName === Game.modName) { option.selected = true; }
+    modSelect.appendChild(option);
+  }
+
+  if (Game.unlockedMods.indexOf(Game.modName) === -1) {
+    Game.modName = "classic";
+  }
+  if (modSelect.value !== Game.modName) {
+    modSelect.value = Game.modName;
+  }
 };
 
 Game.setMod = function (modName) {
-  var preset = CONFIG.MOD_PRESETS[modName] || CONFIG.MOD_PRESETS.classic;
-  Game.modName = preset ? modName : "classic";
+  if (Game.unlockedMods.indexOf(modName) === -1) {
+    modName = "classic";
+  }
+
+  Game.modName = modName;
   CONFIG.applyMod(Game.modName);
-  Game.startLevel(Game.levelNumber);
+  Game.syncModSelect();
   Game.showMessage("Mod: " + CONFIG.MOD_PRESETS[Game.modName].label);
+};
+
+Game.unlockForLevel = function (levelNumber) {
+  var unlockMap = {
+    0: ["turbo"],
+    1: ["moon"],
+    3: ["heavy"],
+    6: ["comet"],
+    10: ["drift"]
+  };
+
+  var unlocks = unlockMap[levelNumber] || [];
+  for (var i = 0; i < unlocks.length; i++) {
+    Game.unlockMod(unlocks[i]);
+  }
+  Game.syncModSelect();
 };
 
 Game.startLevel = function (levelNumber) {
@@ -65,6 +116,7 @@ Game.update = function () {
 
   if (Player.hasWon()) {
     Game.mode = "won";
+    Game.unlockForLevel(Game.levelNumber);
     if (Game.levelNumber + 1 < Level.levels.length) {
       Game.showMessage("Level complete. Press R for the next level.");
     } else {

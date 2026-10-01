@@ -15,6 +15,7 @@ var Player = {
   onGround: false, // is the player standing on something right now?
   angle: 0,        // how far the circle has rolled, for drawing the dot
   facing: 1,       // which way the player is aiming
+  gun: "blaster",
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
   smokePuffs: [],  // short-lived smoke from the player's cannon
@@ -39,6 +40,7 @@ Player.reset = function () {
   Player.onGround = false;
   Player.angle = 0;
   Player.facing = 1;
+  Player.gun = Player.gun || "blaster";
   Player.fireCooldown = 0;
   Player.projectiles = [];
   Player.smokePuffs = [];
@@ -54,23 +56,41 @@ Player.reset = function () {
   Player.dashTimer = 0;
 };
 
+Player.setGun = function (gunName) {
+  if (!CONFIG.GUN_PRESETS[gunName]) { return; }
+  Player.gun = gunName;
+};
+
 Player.shoot = function () {
-  var bullet = {
-    x: Player.x + CONFIG.PLAYER_SIZE / 2 - CONFIG.BULLET_SIZE / 2 + Player.facing * (CONFIG.PLAYER_SIZE / 2 + 6),
-    y: Player.y + CONFIG.PLAYER_SIZE / 2 - CONFIG.BULLET_SIZE / 2,
-    vx: Player.facing * CONFIG.BULLET_SPEED,
-    vy: 0,
-    radius: CONFIG.BULLET_SIZE / 2,
-    life: 0,
-    maxLife: CONFIG.BULLET_LIFE
-  };
-  Player.projectiles.push(bullet);
-  Player.smokePuffs.push({
-    x: bullet.x + Player.facing * (CONFIG.BULLET_SIZE / 2 + 3),
-    y: bullet.y + CONFIG.BULLET_SIZE / 2,
-    life: 0,
-    maxLife: 18
-  });
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  var pelletCount = gun.pellets || 1;
+  var spread = gun.spread || 0;
+
+  for (var i = 0; i < pelletCount; i++) {
+    var offset = pelletCount === 1 ? 0 : (i - (pelletCount - 1) / 2) * spread;
+    var vx = Player.facing * (gun.bulletSpeed || CONFIG.BULLET_SPEED) * Math.cos(offset);
+    var vy = (gun.bulletSpeed || CONFIG.BULLET_SPEED) * Math.sin(offset);
+
+    var bullet = {
+      x: Player.x + CONFIG.PLAYER_SIZE / 2 - (gun.bulletSize || CONFIG.BULLET_SIZE) / 2 + Player.facing * (CONFIG.PLAYER_SIZE / 2 + 6),
+      y: Player.y + CONFIG.PLAYER_SIZE / 2 - (gun.bulletSize || CONFIG.BULLET_SIZE) / 2,
+      vx: vx,
+      vy: vy,
+      radius: (gun.bulletSize || CONFIG.BULLET_SIZE) / 2,
+      life: 0,
+      maxLife: gun.bulletLife || CONFIG.BULLET_LIFE,
+      color: gun.color || "#ffd166",
+      damage: gun.damage || 1
+    };
+
+    Player.projectiles.push(bullet);
+    Player.smokePuffs.push({
+      x: bullet.x + Player.facing * ((gun.bulletSize || CONFIG.BULLET_SIZE) / 2 + 3),
+      y: bullet.y + (gun.bulletSize || CONFIG.BULLET_SIZE) / 2,
+      life: 0,
+      maxLife: 18
+    });
+  }
 };
 
 Player.updateSmoke = function () {
@@ -103,9 +123,10 @@ Player.updateProjectiles = function () {
   for (var i = Player.projectiles.length - 1; i >= 0; i--) {
     var bullet = Player.projectiles[i];
     bullet.x = bullet.x + bullet.vx;
+    bullet.y = bullet.y + bullet.vy;
     bullet.life = bullet.life + 1;
 
-    if (bullet.life > bullet.maxLife || bullet.x < -40 || bullet.x > Level.pixelWidth() + 40) {
+    if (bullet.life > bullet.maxLife || bullet.x < -40 || bullet.x > Level.pixelWidth() + 40 || bullet.y < -40 || bullet.y > CONFIG.CANVAS_H + 40) {
       Player.projectiles.splice(i, 1);
       continue;
     }
@@ -152,24 +173,46 @@ Player.updateBots = function () {
     var dy = Player.y - bot.y;
     var distX = Math.abs(dx);
     var distY = Math.abs(dy);
+    var type = bot.type || "scout";
 
-    bot.x = bot.x + Math.sign(dx || 1) * bot.speed;
-    bot.y = bot.y + Math.sin((Date.now() / 180) + i) * 0.7 + Math.sign(dy || 1) * 0.2;
+    if (type === "turret") {
+      bot.x = bot.x + Math.sin((Date.now() / 400) + bot.phase) * 0.35;
+      bot.y = bot.y + Math.cos((Date.now() / 300) + bot.phase) * 0.45;
+    } else if (type === "zigzag") {
+      bot.x = bot.x + Math.sign(dx || 1) * bot.speed * 1.2;
+      bot.y = bot.y + Math.sin((Date.now() / 150) + bot.phase) * bot.drift;
+    } else if (type === "flanker") {
+      bot.x = bot.x + Math.sign(dx || 1) * bot.speed * 1.4;
+      bot.y = bot.y + Math.cos((Date.now() / 220) + bot.phase) * 0.9;
+    } else {
+      bot.x = bot.x + Math.sign(dx || 1) * bot.speed;
+      bot.y = bot.y + Math.sin((Date.now() / 180) + bot.phase) * 0.7 + Math.sign(dy || 1) * 0.2;
+    }
 
     bot.fireCooldown = (bot.fireCooldown || 0) - 1;
-    if (distX < 260 && distY < 180 && bot.fireCooldown <= 0) {
+    if (distX < (bot.type === "turret" ? 320 : 260) && distY < (bot.type === "turret" ? 220 : 180) && bot.fireCooldown <= 0) {
       var dirX = dx === 0 ? 1 : dx / Math.sqrt(dx * dx + dy * dy);
       var dirY = dy === 0 ? 0 : dy / Math.sqrt(dx * dx + dy * dy);
-      Player.botProjectiles.push({
-        x: bot.x + bot.w / 2,
-        y: bot.y + bot.h / 2,
-        vx: dirX * 4,
-        vy: dirY * 4,
-        radius: 4,
-        life: 0,
-        maxLife: 120
-      });
-      bot.fireCooldown = 80;
+      var shotCount = bot.type === "turret" ? 3 : 1;
+      var spread = bot.type === "turret" ? 0.22 : 0;
+
+      for (var shotIndex = 0; shotIndex < shotCount; shotIndex++) {
+        var angleOffset = shotCount === 1 ? 0 : (shotIndex - 1) * spread;
+        var shotDirX = dirX * Math.cos(angleOffset) - dirY * Math.sin(angleOffset);
+        var shotDirY = dirX * Math.sin(angleOffset) + dirY * Math.cos(angleOffset);
+
+        Player.botProjectiles.push({
+          x: bot.x + bot.w / 2,
+          y: bot.y + bot.h / 2,
+          vx: shotDirX * (bot.shotSpeed || 4),
+          vy: shotDirY * (bot.shotSpeed || 4),
+          radius: bot.type === "turret" ? 5 : 4,
+          life: 0,
+          maxLife: 120
+        });
+      }
+
+      bot.fireCooldown = bot.shotRate || 80;
     }
 
     if (bot.x < 0) { bot.x = 0; }
@@ -300,6 +343,7 @@ Player.update = function () {
 
   Player.jumpHeld = Input.jump;
   Player.dashHeld = Input.dash;
+  Level.updateFallingSpikes();
   Player.updateProjectiles();
   Player.updateSmoke();
   Player.updateBots();
@@ -310,6 +354,12 @@ Player.isDead = function () {
   var size = CONFIG.PLAYER_SIZE;
   if (Player.hitByTankShot) { return true; }
   if (Collide.hitsSpike(Player.x, Player.y, size, size)) { return true; }
+  for (var i = 0; i < Level.fallingSpikes.length; i++) {
+    var spike = Level.fallingSpikes[i];
+    if (Collide.boxesOverlap(Player.x, Player.y, size, size, spike.x, spike.y, spike.w, spike.h)) {
+      return true;
+    }
+  }
   if (Collide.hitsLava(Player.x, Player.y, size, size)) { return true; }
   if (Player.y > CONFIG.CANVAS_H + 200) { return true; }   // fell off the world
   for (var i = 0; i < Level.bots.length; i++) {

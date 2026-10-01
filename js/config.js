@@ -24,9 +24,9 @@ var CONFIG = {
   GRAVITY: 0.9,       // how hard the world pulls DOWN. bigger = heavier
   MAX_FALL: 16,       // fastest the player is allowed to fall
   DOUBLE_JUMP_COOLDOWN: 90,
-  DASH_SPEED: 9,      // burst speed when dashing
-  DASH_TIME: 8,       // how many frames the dash lasts
-  DASH_COOLDOWN: 60,  // frames until the dash can be used again
+  DASH_SPEED: 12,     // burst speed when dashing
+  DASH_TIME: 12,      // how many frames the dash lasts
+  DASH_COOLDOWN: 45,  // frames until the dash can be used again
 
   // --- shooting --------------------------------------------------------
   SHOOT_COOLDOWN: 8,  // frames between shots
@@ -55,9 +55,9 @@ CONFIG.MOD_PRESETS = {
     DOUBLE_JUMP_POWER: 18,
     GRAVITY: 0.9,
     MAX_FALL: 16,
-    DASH_SPEED: 9,
-    DASH_TIME: 8,
-    DASH_COOLDOWN: 60,
+    DASH_SPEED: 12,
+    DASH_TIME: 12,
+    DASH_COOLDOWN: 45,
     SHOOT_COOLDOWN: 8
   },
   turbo: {
@@ -67,9 +67,9 @@ CONFIG.MOD_PRESETS = {
     DOUBLE_JUMP_POWER: 20,
     GRAVITY: 0.8,
     MAX_FALL: 17,
-    DASH_SPEED: 12,
-    DASH_TIME: 10,
-    DASH_COOLDOWN: 45,
+    DASH_SPEED: 15,
+    DASH_TIME: 14,
+    DASH_COOLDOWN: 35,
     SHOOT_COOLDOWN: 6
   },
   moon: {
@@ -79,9 +79,9 @@ CONFIG.MOD_PRESETS = {
     DOUBLE_JUMP_POWER: 16,
     GRAVITY: 0.55,
     MAX_FALL: 12,
-    DASH_SPEED: 7,
-    DASH_TIME: 9,
-    DASH_COOLDOWN: 75,
+    DASH_SPEED: 10,
+    DASH_TIME: 12,
+    DASH_COOLDOWN: 55,
     SHOOT_COOLDOWN: 10
   },
   heavy: {
@@ -91,10 +91,34 @@ CONFIG.MOD_PRESETS = {
     DOUBLE_JUMP_POWER: 17,
     GRAVITY: 1.2,
     MAX_FALL: 18,
-    DASH_SPEED: 8,
-    DASH_TIME: 7,
-    DASH_COOLDOWN: 70,
+    DASH_SPEED: 11,
+    DASH_TIME: 10,
+    DASH_COOLDOWN: 60,
     SHOOT_COOLDOWN: 10
+  },
+  comet: {
+    label: "Comet",
+    MOVE_SPEED: 4.5,
+    JUMP_POWER: 19,
+    DOUBLE_JUMP_POWER: 21,
+    GRAVITY: 0.7,
+    MAX_FALL: 18,
+    DASH_SPEED: 18,
+    DASH_TIME: 15,
+    DASH_COOLDOWN: 30,
+    SHOOT_COOLDOWN: 5
+  },
+  drift: {
+    label: "Drift",
+    MOVE_SPEED: 3.5,
+    JUMP_POWER: 17,
+    DOUBLE_JUMP_POWER: 19,
+    GRAVITY: 0.75,
+    MAX_FALL: 15,
+    DASH_SPEED: 16,
+    DASH_TIME: 16,
+    DASH_COOLDOWN: 28,
+    SHOOT_COOLDOWN: 7
   }
 };
 
@@ -106,6 +130,53 @@ CONFIG.applyMod = function (modName) {
     }
   });
   return preset.label;
+};
+
+CONFIG.GUN_PRESETS = {
+  blaster: {
+    label: "Blaster",
+    cooldown: 8,
+    bulletSpeed: 10,
+    bulletSize: 6,
+    bulletLife: 90,
+    pellets: 1,
+    spread: 0,
+    damage: 1,
+    color: "#ffd166"
+  },
+  scatter: {
+    label: "Scatter",
+    cooldown: 12,
+    bulletSpeed: 8,
+    bulletSize: 5,
+    bulletLife: 68,
+    pellets: 3,
+    spread: 0.28,
+    damage: 1,
+    color: "#a2d2ff"
+  },
+  plasma: {
+    label: "Plasma",
+    cooldown: 16,
+    bulletSpeed: 12,
+    bulletSize: 8,
+    bulletLife: 110,
+    pellets: 1,
+    spread: 0,
+    damage: 2,
+    color: "#ff7b00"
+  },
+  burst: {
+    label: "Burst",
+    cooldown: 10,
+    bulletSpeed: 11,
+    bulletSize: 5,
+    bulletLife: 75,
+    pellets: 2,
+    spread: 0.12,
+    damage: 1,
+    color: "#90be6d"
+  }
 };
 
 CONFIG.applyMod("classic");

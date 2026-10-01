@@ -55,6 +55,7 @@ Draw.everything = function () {
   ctx.translate(-Draw.cameraX, 0);
 
   Draw.world();
+  Draw.fallingSpikes();
   Draw.enemies();
   Draw.bots();
   Draw.projectiles();
@@ -183,6 +184,23 @@ Draw.lava = function (x, y, size) {
   ctx.fillRect(x + 24, y + 22, 8, 3);
 };
 
+Draw.fallingSpikes = function () {
+  for (var i = 0; i < Level.fallingSpikes.length; i++) {
+    var spike = Level.fallingSpikes[i];
+    var ctx = Draw.ctx;
+    ctx.fillStyle = Draw.colors.spike;
+    ctx.strokeStyle = Draw.colors.dark;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(spike.x + spike.w / 2, spike.y);
+    ctx.lineTo(spike.x + spike.w, spike.y + spike.h);
+    ctx.lineTo(spike.x, spike.y + spike.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+};
+
 // The finish: a dark pole with a golden flag.
 Draw.finish = function (x, y, size) {
   var ctx = Draw.ctx;
@@ -219,7 +237,7 @@ Draw.enemies = function () {
 Draw.projectiles = function () {
   for (var i = 0; i < Player.projectiles.length; i++) {
     var b = Player.projectiles[i];
-    Draw.ctx.fillStyle = Draw.colors.sun;
+    Draw.ctx.fillStyle = b.color || Draw.colors.sun;
     Draw.ctx.strokeStyle = Draw.colors.dark;
     Draw.ctx.lineWidth = 1;
     Draw.ctx.beginPath();
@@ -259,7 +277,8 @@ Draw.bots = function () {
       ctx.fillStyle = Draw.colors.sun;
       ctx.fillRect(bot.x + 2, bot.y - 12, (bot.w - 4) * (bot.hp / bot.maxHp), 3);
     } else {
-      ctx.fillStyle = Draw.colors.bot;
+      var botColor = bot.type === "turret" ? "#f4a261" : bot.type === "zigzag" ? "#90be6d" : bot.type === "flanker" ? "#48cae4" : Draw.colors.bot;
+      ctx.fillStyle = botColor;
       ctx.fillRect(bot.x, bot.y + 5, bot.w, bot.h - 7);
       ctx.strokeStyle = Draw.colors.dark;
       ctx.lineWidth = 2;
@@ -270,7 +289,7 @@ Draw.bots = function () {
     ctx.fillRect(bot.x + bot.w - 10, bot.y + 9, 5, 4);
     ctx.beginPath();
     ctx.arc(centerX, bot.y + 7, 8, 0, Math.PI * 2);
-    ctx.fillStyle = Draw.colors.bot;
+    ctx.fillStyle = bot.isBoss ? Draw.colors.bot : (bot.type === "turret" ? "#f4a261" : bot.type === "zigzag" ? "#90be6d" : bot.type === "flanker" ? "#48cae4" : Draw.colors.bot);
     ctx.fill();
 
     // cannon points toward the player.

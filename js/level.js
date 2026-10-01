@@ -19,7 +19,8 @@ var Level = {
   startY: 0,
   enemies: [],      // all enemy targets placed in the current level
   bots: [],         // hostile bots that move and attack
-  boss: null        // the optional final boss for the level
+  boss: null,      // the optional final boss for the level
+  fallingSpikes: []
 };
 
 // --- STEP 1: read the two data files ----------------------------------
@@ -51,6 +52,7 @@ Level.build = function (levelNumber) {
   Level.enemies = [];
   Level.bots = [];
   Level.boss = null;
+  Level.fallingSpikes = [];
 
   // start with 10 empty rows
   for (var row = 0; row < CONFIG.ROWS; row++) {
@@ -74,6 +76,7 @@ Level.build = function (levelNumber) {
 
   Level.findStart();
   Level.findEnemies();
+  Level.findFallingSpikes();
   Level.spawnBots();
 };
 
@@ -94,39 +97,102 @@ Level.findStart = function () {
 };
 
 Level.findEnemies = function () {
+  var enemyMap = {
+    E: "scout",
+    T: "turret",
+    Z: "zigzag",
+    F: "flanker"
+  };
+
   for (var row = 0; row < CONFIG.ROWS; row++) {
     for (var col = 0; col < Level.cols; col++) {
-      if (Level.charAt(col, row) === "E") {
+      var tile = Level.charAt(col, row);
+      if (enemyMap[tile]) {
         Level.enemies.push({
           x: col * CONFIG.TILE + 4,
           y: row * CONFIG.TILE + 2,
           w: CONFIG.TILE - 8,
-          h: CONFIG.TILE - 8
+          h: CONFIG.TILE - 8,
+          marker: tile,
+          type: enemyMap[tile]
         });
       }
     }
   }
 };
 
+Level.findFallingSpikes = function () {
+  for (var row = 0; row < CONFIG.ROWS; row++) {
+    for (var col = 0; col < Level.cols; col++) {
+      if (Level.charAt(col, row) === "!") {
+        Level.fallingSpikes.push({
+          x: col * CONFIG.TILE + 6,
+          y: row * CONFIG.TILE + 2,
+          w: 18,
+          h: 18,
+          vy: 0,
+          triggerX: col * CONFIG.TILE,
+          triggered: false,
+          baseY: row * CONFIG.TILE + 2
+        });
+        Level.grid[row] = Level.grid[row].slice(0, col) + "." + Level.grid[row].slice(col + 1);
+      }
+    }
+  }
+};
+
+Level.updateFallingSpikes = function () {
+  for (var i = 0; i < Level.fallingSpikes.length; i++) {
+    var spike = Level.fallingSpikes[i];
+    if (!spike.triggered) {
+      if (Math.abs(Player.x - spike.x) < 240) {
+        spike.triggered = true;
+        spike.vy = 1;
+      }
+      continue;
+    }
+
+    spike.vy = spike.vy + 0.6;
+    spike.y = spike.y + spike.vy;
+
+    if (spike.y > CONFIG.CANVAS_H + 50) {
+      spike.y = spike.baseY;
+      spike.vy = 0;
+      spike.triggered = false;
+    }
+  }
+};
+
 Level.spawnBots = function () {
-  // Spawn a couple of roaming bots around each enemy marker so the
-  // level feels more active without making the arena feel chaotic.
+  var typeMap = {
+    E: "scout",
+    T: "turret",
+    Z: "zigzag",
+    F: "flanker"
+  };
+
   for (var i = 0; i < Level.enemies.length; i++) {
     var enemy = Level.enemies[i];
-    for (var j = 0; j < 2; j++) {
-      Level.bots.push({
-        x: enemy.x + (j === 0 ? -10 : 10),
-        y: enemy.y - 10 + (j * 6),
-        w: 22,
-        h: 18,
-        dir: 1,
-        speed: 0.9 + ((i + j) % 3) * 0.2,
-        oxid: Math.random() * 1000,
-        fireCooldown: 30 + (i * 12) + (j * 18),
-        alive: true,
-        isBoss: false
-      });
-    }
+    var type = typeMap[enemy.marker] || "scout";
+    var bot = {
+      x: enemy.x + (type === "turret" ? 4 : -4),
+      y: enemy.y - 8,
+      w: type === "turret" ? 26 : 22,
+      h: type === "turret" ? 22 : 18,
+      dir: 1,
+      speed: type === "scout" ? 1.15 : type === "zigzag" ? 1.3 : type === "flanker" ? 1.45 : 0.55,
+      oxid: Math.random() * 1000,
+      fireCooldown: type === "turret" ? 24 : 36 + (i % 3) * 12,
+      alive: true,
+      isBoss: false,
+      type: type,
+      phase: i * 17,
+      shotSpeed: type === "turret" ? 5.5 : type === "flanker" ? 4.2 : 4,
+      shotRate: type === "turret" ? 48 : type === "zigzag" ? 60 : 80,
+      drift: type === "zigzag" ? 1.2 : type === "flanker" ? 0.8 : 0.2
+    };
+
+    Level.bots.push(bot);
   }
 
   // A final boss lurks near the end of the stage.
@@ -144,7 +210,8 @@ Level.spawnBots = function () {
     alive: true,
     isBoss: true,
     hp: 12,
-    maxHp: 12
+    maxHp: 12,
+    type: "boss"
   };
   Level.bots.push(Level.boss);
 };
@@ -161,7 +228,7 @@ Level.isSolid  = function (col, row) { return Level.charAt(col, row) === "#"; };
 Level.isEnemy  = function (col, row) { return Level.charAt(col, row) === "E"; };
 Level.isSpike  = function (col, row) {
   var tile = Level.charAt(col, row);
-  return tile === "^" || tile === "v";
+  return tile === "^" || tile === "v" || tile === "!";
 };
 Level.isLava   = function (col, row) { return Level.charAt(col, row) === "~"; };
 Level.isFinish = function (col, row) { return Level.charAt(col, row) === "F"; };

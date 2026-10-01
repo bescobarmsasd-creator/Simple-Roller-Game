@@ -2,7 +2,7 @@
   "_comment": "A level is just a list of piece names in order, left to right. Every name you use here must exist in data/pieces.json. Add, remove, or reorder pieces to build a new level. Every level should start with 'start' and end with 'finish'.",
 
   "levels": [
-    {"name":"Level 1 - Trial by Fire","pieces":["start","spikes","gap","lava","step","enemy","spikepit","platform","ceiling","gap","stairs","gap","flat","platform","enemy","gap","stairs","lava","spikes","flat","gap","stairs","platform","enemy","spikepit","gap","lava","flat","finish"]},
+    {"name":"Level 1 - Trial by Fire","pieces":["start","spikes","gap","lava","step","enemy","spikepit","platform","ceiling","gap","stairs","gap","flat","platform","enemy","gap","stairs","lava","spikes","flat","falling","gap","stairs","platform","enemy","spikepit","gap","lava","flat","finish"]},
     {"name":"Level 2 - No Margin","pieces":["start","ceiling","gap","platform","enemy","lava","step","spikepit","gap","stairs","ceiling","gap","platform","spikes","flat","finish"]},
     {"name":"Level 3 - First Contact","pieces":["start","flat","enemy","gap","step","spikes","platform","lava","stairs","finish"]},
     {"name":"Level 4 - Low Road","pieces":["start","lava","flat","spikepit","gap","enemy","ceiling","step","flat","finish"]},
