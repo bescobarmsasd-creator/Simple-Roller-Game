@@ -59,6 +59,7 @@ Player.reset = function () {
 Player.setGun = function (gunName) {
   if (!CONFIG.GUN_PRESETS[gunName]) { return; }
   Player.gun = gunName;
+  Player.fireCooldown = 0;
 };
 
 Player.shoot = function () {
@@ -265,9 +266,10 @@ Player.update = function () {
     Player.facing = 1;
   }
 
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
   if (Input.fire && Player.fireCooldown <= 0) {
     Player.shoot();
-    Player.fireCooldown = CONFIG.SHOOT_COOLDOWN;
+    Player.fireCooldown = gun.cooldown || CONFIG.SHOOT_COOLDOWN;
   }
   Player.fireCooldown = Math.max(0, Player.fireCooldown - 1);
 
@@ -307,6 +309,7 @@ Player.update = function () {
   if (Player.vy > CONFIG.MAX_FALL) { Player.vy = CONFIG.MAX_FALL; }
 
   // --- 4. move sideways, one pixel at a time, stopping at walls -------
+  var prevX = Player.x;
   var stepX = 0;
   if (Player.vx > 0) { stepX = 1; }
   if (Player.vx < 0) { stepX = -1; }
@@ -317,7 +320,13 @@ Player.update = function () {
     Player.angle = Player.angle + stepX / CONFIG.PLAYER_RADIUS; // roll it
   }
 
+  if (Collide.hitsSolid(Player.x, Player.y, size, size)) {
+    Player.x = prevX;
+    Player.vx = 0;
+  }
+
   // --- 5. move up or down, one pixel at a time ------------------------
+  var prevY = Player.y;
   var stepY = 0;
   if (Player.vy > 0) { stepY = 1; }
   if (Player.vy < 0) { stepY = -1; }
@@ -331,6 +340,12 @@ Player.update = function () {
       break;
     }
     Player.y = Player.y + stepY;
+  }
+
+  if (Collide.hitsSolid(Player.x, Player.y, size, size)) {
+    Player.y = prevY;
+    if (stepY > 0) { Player.onGround = true; }
+    Player.vy = 0;
   }
 
   // --- 6. keep the player inside the left edge of the world -----------

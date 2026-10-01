@@ -363,16 +363,19 @@ Draw.player = function () {
   var ctx = Draw.ctx;
   var centerX = Player.x + CONFIG.PLAYER_SIZE / 2;
   var centerY = Player.y + CONFIG.PLAYER_SIZE / 2;
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  var bodyColor = gun.color || Draw.colors.player;
+  var accentColor = gun.label === "Plasma" ? "#ffb703" : gun.label === "Scatter" ? "#90e0ef" : gun.label === "Burst" ? "#c7f9cc" : Draw.colors.playerHighlight;
 
   // tracks and wheels
   ctx.fillStyle = Draw.colors.dark;
   ctx.fillRect(Player.x - 2, Player.y + 15, CONFIG.PLAYER_SIZE + 4, 8);
-  ctx.fillStyle = Draw.colors.playerHighlight;
+  ctx.fillStyle = accentColor;
   ctx.fillRect(Player.x + 2, Player.y + 17, 5, 4);
   ctx.fillRect(Player.x + CONFIG.PLAYER_SIZE - 7, Player.y + 17, 5, 4);
 
   // tank body
-  ctx.fillStyle = Draw.colors.player;
+  ctx.fillStyle = bodyColor;
   ctx.strokeStyle = Draw.colors.dark;
   ctx.lineWidth = CONFIG.LINE_WIDTH;
   ctx.fillRect(Player.x, Player.y + 5, CONFIG.PLAYER_SIZE, 13);
@@ -384,15 +387,15 @@ Draw.player = function () {
   );
 
   // turret
-  ctx.fillStyle = Draw.colors.playerHighlight;
+  ctx.fillStyle = accentColor;
   ctx.beginPath();
   ctx.arc(centerX, Player.y + 7, 7, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // cannon
-  var gunLength = 18;
-  var gunWidth = 7;
+  var gunLength = gun.label === "Plasma" ? 22 : gun.label === "Scatter" ? 16 : gun.label === "Burst" ? 18 : 18;
+  var gunWidth = gun.label === "Plasma" ? 9 : 7;
   var gunX = centerX + Player.facing * 7;
   var gunY = centerY;
   var muzzleX = gunX + Player.facing * gunLength;
@@ -405,6 +408,45 @@ Draw.player = function () {
     gunLength,
     gunWidth
   );
+
+  if (gun.label === "Scatter") {
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY - 12,
+      gunLength * 0.55,
+      4
+    );
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY + 8,
+      gunLength * 0.55,
+      4
+    );
+  }
+
+  if (gun.label === "Burst") {
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY - 9,
+      gunLength * 0.7,
+      4
+    );
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY + 5,
+      gunLength * 0.7,
+      4
+    );
+  }
+
+  if (gun.label === "Plasma") {
+    ctx.fillStyle = accentColor;
+    ctx.beginPath();
+    ctx.arc(Player.facing > 0 ? centerX + 18 : centerX - 18, gunY, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   for (var i = 0; i < Player.smokePuffs.length; i++) {
     var puff = Player.smokePuffs[i];
@@ -422,7 +464,8 @@ Draw.player = function () {
   }
 
   // muzzle flash when recently fired
-  if (Player.fireCooldown > 0 && Player.fireCooldown < CONFIG.SHOOT_COOLDOWN - 2) {
+  var currentGun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  if (Player.fireCooldown > 0 && Player.fireCooldown < (currentGun.cooldown || CONFIG.SHOOT_COOLDOWN) - 2) {
     ctx.fillStyle = Draw.colors.sun;
     ctx.beginPath();
     ctx.arc(muzzleX, muzzleY, 5, 0, Math.PI * 2);
