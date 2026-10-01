@@ -12,6 +12,8 @@ Press `Ctrl + Shift + R` to hard refresh, or you will see the old version.
 
 - LEFT / RIGHT arrow - roll
 - SPACE or UP arrow - jump
+- SHIFT, E, or K - dash
+- F, J, or X - shoot
 - R - restart the level
 
 ## Where everything lives

@@ -11,7 +11,16 @@
 
 var Game = {
   mode: "playing",   // "playing", "dead", or "won"
-  levelNumber: 0
+  levelNumber: 0,
+  modName: "classic"
+};
+
+Game.setMod = function (modName) {
+  var preset = CONFIG.MOD_PRESETS[modName] || CONFIG.MOD_PRESETS.classic;
+  Game.modName = preset ? modName : "classic";
+  CONFIG.applyMod(Game.modName);
+  Game.startLevel(Game.levelNumber);
+  Game.showMessage("Mod: " + CONFIG.MOD_PRESETS[Game.modName].label);
 };
 
 Game.startLevel = function (levelNumber) {

@@ -11,6 +11,14 @@
 Draw.setup();
 
 Level.loadData(function () {
+  var modSelect = document.getElementById("mod-select");
+  if (modSelect) {
+    modSelect.value = Game.modName;
+    modSelect.addEventListener("change", function () {
+      Game.setMod(modSelect.value);
+    });
+  }
+
   Game.startLevel(CONFIG.START_LEVEL);
   Game.loop();
 });

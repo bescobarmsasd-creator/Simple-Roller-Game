@@ -46,3 +46,66 @@ var CONFIG = {
   // --- rules ----------------------------------------------------------
   START_LEVEL: 0      // which level in data/levels.json to load first
 };
+
+CONFIG.MOD_PRESETS = {
+  classic: {
+    label: "Classic",
+    MOVE_SPEED: 3,
+    JUMP_POWER: 16,
+    DOUBLE_JUMP_POWER: 18,
+    GRAVITY: 0.9,
+    MAX_FALL: 16,
+    DASH_SPEED: 9,
+    DASH_TIME: 8,
+    DASH_COOLDOWN: 60,
+    SHOOT_COOLDOWN: 8
+  },
+  turbo: {
+    label: "Turbo",
+    MOVE_SPEED: 4,
+    JUMP_POWER: 18,
+    DOUBLE_JUMP_POWER: 20,
+    GRAVITY: 0.8,
+    MAX_FALL: 17,
+    DASH_SPEED: 12,
+    DASH_TIME: 10,
+    DASH_COOLDOWN: 45,
+    SHOOT_COOLDOWN: 6
+  },
+  moon: {
+    label: "Moon",
+    MOVE_SPEED: 2.5,
+    JUMP_POWER: 14,
+    DOUBLE_JUMP_POWER: 16,
+    GRAVITY: 0.55,
+    MAX_FALL: 12,
+    DASH_SPEED: 7,
+    DASH_TIME: 9,
+    DASH_COOLDOWN: 75,
+    SHOOT_COOLDOWN: 10
+  },
+  heavy: {
+    label: "Heavy",
+    MOVE_SPEED: 2.5,
+    JUMP_POWER: 15,
+    DOUBLE_JUMP_POWER: 17,
+    GRAVITY: 1.2,
+    MAX_FALL: 18,
+    DASH_SPEED: 8,
+    DASH_TIME: 7,
+    DASH_COOLDOWN: 70,
+    SHOOT_COOLDOWN: 10
+  }
+};
+
+CONFIG.applyMod = function (modName) {
+  var preset = CONFIG.MOD_PRESETS[modName] || CONFIG.MOD_PRESETS.classic;
+  Object.keys(preset).forEach(function (key) {
+    if (key !== "label") {
+      CONFIG[key] = preset[key];
+    }
+  });
+  return preset.label;
+};
+
+CONFIG.applyMod("classic");
