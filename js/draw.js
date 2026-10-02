@@ -244,6 +244,16 @@ Draw.powerUps = function () {
     var y = pickup.y + pickup.h / 2;
     var size = pickup.w * pulse;
 
+    if (pickup.type === "ammo") {
+      Draw.ctx.fillStyle = "#48cae4";
+      Draw.ctx.fillRect(pickup.x, pickup.y, pickup.w, pickup.h);
+      Draw.ctx.fillStyle = Draw.colors.dark;
+      Draw.ctx.fillRect(pickup.x + 3, pickup.y + 5, pickup.w - 6, 3);
+      Draw.ctx.fillRect(pickup.x + 5, pickup.y + 3, 3, pickup.h - 6);
+      Draw.ctx.fillRect(pickup.x + pickup.w - 8, pickup.y + 3, 3, pickup.h - 6);
+      continue;
+    }
+
     Draw.ctx.fillStyle = "#f4d35e";
     Draw.ctx.strokeStyle = Draw.colors.dark;
     Draw.ctx.lineWidth = 2;

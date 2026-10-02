@@ -169,14 +169,24 @@ Level.updateFallingSpikes = function () {
 Level.spawnPowerUps = function () {
   var laneX = Math.max(180, Math.min(Level.pixelWidth() * 0.45, Level.pixelWidth() - 220));
   var laneY = 120;
-  Level.powerUps = [{
-    x: laneX,
-    y: laneY,
-    w: 18,
-    h: 18,
-    pulse: 0,
-    type: "gun"
-  }];
+  Level.powerUps = [
+    {
+      x: laneX,
+      y: laneY,
+      w: 18,
+      h: 18,
+      pulse: 0,
+      type: "gun"
+    },
+    {
+      x: laneX + 120,
+      y: laneY + 30,
+      w: 16,
+      h: 16,
+      pulse: 0,
+      type: "ammo"
+    }
+  ];
 };
 
 Level.spawnBots = function () {

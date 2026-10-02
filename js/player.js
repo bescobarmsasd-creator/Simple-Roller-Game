@@ -91,6 +91,17 @@ Player.applyPowerUp = function () {
   }
 };
 
+Player.getAmmo = function () {
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  if (!gun.magazine) {
+    if (Game && Game.showMessage) { Game.showMessage("This gun doesn't use ammo."); }
+    return;
+  }
+
+  Player.reserveAmmo = (Player.reserveAmmo || 0) + (gun.magazine || 6);
+  if (Game && Game.showMessage) { Game.showMessage("Ammo +" + (gun.magazine || 6) + " for " + gun.label + "."); }
+};
+
 Player.reloadWeapon = function () {
   var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
   if (!gun.magazine || Player.reloadTimer > 0 || Player.ammo >= gun.magazine) { return; }
@@ -212,7 +223,11 @@ Player.updatePowerUps = function () {
       pickup.w,
       pickup.h
     )) {
-      Player.applyPowerUp();
+      if (pickup.type === "ammo") {
+        Player.getAmmo();
+      } else {
+        Player.applyPowerUp();
+      }
       Level.powerUps.splice(i, 1);
     }
   }
