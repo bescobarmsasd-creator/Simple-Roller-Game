@@ -12,6 +12,7 @@ var Input = {
   jump: false,
   fire: false,
   dash: false,
+  reload: false,
   restart: false
 };
 
@@ -37,5 +38,6 @@ function setKey(key, isDown) {
   if (key === "ArrowUp"    || key === " " || key === "w" || key === "W") { Input.jump = isDown; }
   if (key === "f" || key === "F" || key === "j" || key === "J" || key === "x" || key === "X") { Input.fire = isDown; }
   if (key === "Shift" || key === "e" || key === "E" || key === "k" || key === "K") { Input.dash = isDown; }
+  if (key === "q" || key === "Q") { Input.reload = isDown; }
   if (key === "r" || key === "R") { Input.restart = isDown; }
 }

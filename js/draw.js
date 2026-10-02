@@ -56,6 +56,7 @@ Draw.everything = function () {
 
   Draw.world();
   Draw.fallingSpikes();
+  Draw.powerUps();
   Draw.enemies();
   Draw.bots();
   Draw.projectiles();
@@ -65,6 +66,7 @@ Draw.everything = function () {
   ctx.restore();
   Draw.doubleJumpBar();
   Draw.cooldownBar();
+  Draw.ammoBar();
 };
 
 // Draw every grid square that is currently on screen.
@@ -234,9 +236,79 @@ Draw.enemies = function () {
   }
 };
 
+Draw.powerUps = function () {
+  for (var i = 0; i < Level.powerUps.length; i++) {
+    var pickup = Level.powerUps[i];
+    var pulse = 1 + Math.sin((Date.now() / 220) + i) * 0.18;
+    var x = pickup.x + pickup.w / 2;
+    var y = pickup.y + pickup.h / 2;
+    var size = pickup.w * pulse;
+
+    Draw.ctx.fillStyle = "#f4d35e";
+    Draw.ctx.strokeStyle = Draw.colors.dark;
+    Draw.ctx.lineWidth = 2;
+    Draw.ctx.beginPath();
+    Draw.ctx.moveTo(x, y - size / 2);
+    Draw.ctx.lineTo(x + size / 2, y);
+    Draw.ctx.lineTo(x, y + size / 2);
+    Draw.ctx.lineTo(x - size / 2, y);
+    Draw.ctx.closePath();
+    Draw.ctx.fill();
+    Draw.ctx.stroke();
+
+    Draw.ctx.fillStyle = Draw.colors.dark;
+    Draw.ctx.font = "bold 10px sans-serif";
+    Draw.ctx.fillText("+", x - 3, y + 4);
+  }
+};
+
+Draw.grenade = function (x, y, size, color) {
+  var ctx = Draw.ctx;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = color || "#8b8a7a";
+  ctx.strokeStyle = Draw.colors.dark;
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.8, -size * 0.35);
+  ctx.bezierCurveTo(-size * 0.86, -size * 0.78, -size * 0.35, -size * 0.95, 0, -size * 0.98);
+  ctx.bezierCurveTo(size * 0.35, -size * 0.95, size * 0.86, -size * 0.78, size * 0.8, -size * 0.35);
+  ctx.bezierCurveTo(size * 0.92, -size * 0.1, size * 0.94, size * 0.55, size * 0.68, size * 0.82);
+  ctx.bezierCurveTo(size * 0.42, size * 1.02, -size * 0.42, size * 1.02, -size * 0.68, size * 0.82);
+  ctx.bezierCurveTo(-size * 0.94, size * 0.55, -size * 0.92, -size * 0.1, -size * 0.8, -size * 0.35);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#d9d0b6";
+  ctx.fillRect(-size * 0.16, -size * 0.9, size * 0.32, size * 0.18);
+  ctx.fillStyle = "#c9c1a5";
+  ctx.fillRect(-size * 0.12, -size * 0.7, size * 0.24, size * 0.22);
+
+  ctx.fillStyle = "#4d4f4f";
+  ctx.beginPath();
+  ctx.arc(0, -size * 0.5, size * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#d8c17d";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.18, -size * 0.96);
+  ctx.lineTo(size * 0.18, -size * 0.96);
+  ctx.stroke();
+
+  ctx.restore();
+};
+
 Draw.projectiles = function () {
   for (var i = 0; i < Player.projectiles.length; i++) {
     var b = Player.projectiles[i];
+    if (b.explosive) {
+      Draw.grenade(b.x, b.y, (b.radius || 7) + 2, b.color || "#a1a09d");
+      continue;
+    }
+
     Draw.ctx.fillStyle = b.color || Draw.colors.sun;
     Draw.ctx.strokeStyle = Draw.colors.dark;
     Draw.ctx.lineWidth = 1;
@@ -358,6 +430,32 @@ Draw.cooldownBar = function () {
   ctx.fillText("Dash", x + 2, y - 5);
 };
 
+Draw.ammoBar = function () {
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  if (!gun.magazine) { return; }
+
+  var ctx = Draw.ctx;
+  var x = 20;
+  var y = 66;
+  var w = 140;
+  var h = 12;
+  var ratio = gun.magazine > 0 ? Player.ammo / gun.magazine : 0;
+  ratio = Math.max(0, Math.min(1, ratio));
+
+  ctx.fillStyle = "#d9e2dc";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = Draw.colors.dark;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+
+  ctx.fillStyle = "#4cc9f0";
+  ctx.fillRect(x + 3, y + 3, (w - 6) * ratio, h - 6);
+
+  ctx.fillStyle = Draw.colors.dark;
+  ctx.font = "12px sans-serif";
+  ctx.fillText(gun.label + " " + Player.ammo + "/" + gun.magazine, x + 2, y - 5);
+};
+
 // The player tank, drawn over the same collision box as the old circle.
 Draw.player = function () {
   var ctx = Draw.ctx;
@@ -365,7 +463,8 @@ Draw.player = function () {
   var centerY = Player.y + CONFIG.PLAYER_SIZE / 2;
   var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
   var bodyColor = gun.color || Draw.colors.player;
-  var accentColor = gun.label === "Plasma" ? "#ffb703" : gun.label === "Scatter" ? "#90e0ef" : gun.label === "Burst" ? "#c7f9cc" : Draw.colors.playerHighlight;
+  var accentColor = gun.accent ||
+    (gun.label === "Plasma" ? "#ffb703" : gun.label === "Scatter" ? "#90e0ef" : gun.label === "Burst" ? "#c7f9cc" : Draw.colors.playerHighlight);
 
   // tracks and wheels
   ctx.fillStyle = Draw.colors.dark;
@@ -394,8 +493,8 @@ Draw.player = function () {
   ctx.stroke();
 
   // cannon
-  var gunLength = gun.label === "Plasma" ? 22 : gun.label === "Scatter" ? 16 : gun.label === "Burst" ? 18 : 18;
-  var gunWidth = gun.label === "Plasma" ? 9 : 7;
+  var gunLength = gun.length || (gun.label === "Plasma" ? 22 : gun.label === "Scatter" ? 16 : gun.label === "Burst" ? 18 : gun.label === "Cannon" ? 26 : gun.label === "Rail" ? 28 : 18);
+  var gunWidth = gun.width || (gun.label === "Plasma" ? 9 : 7);
   var gunX = centerX + Player.facing * 7;
   var gunY = centerY;
   var muzzleX = gunX + Player.facing * gunLength;
@@ -409,7 +508,7 @@ Draw.player = function () {
     gunWidth
   );
 
-  if (gun.label === "Scatter") {
+  if (gun.label === "Scatter" || gun.label === "Pulse") {
     ctx.fillStyle = accentColor;
     ctx.fillRect(
       Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
@@ -425,7 +524,7 @@ Draw.player = function () {
     );
   }
 
-  if (gun.label === "Burst") {
+  if (gun.label === "Burst" || gun.label === "Nova") {
     ctx.fillStyle = accentColor;
     ctx.fillRect(
       Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
@@ -445,6 +544,60 @@ Draw.player = function () {
     ctx.fillStyle = accentColor;
     ctx.beginPath();
     ctx.arc(Player.facing > 0 ? centerX + 18 : centerX - 18, gunY, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (gun.label === "Grenade") {
+    ctx.save();
+    ctx.translate(Player.facing > 0 ? centerX + 16 : centerX - 16, gunY);
+    ctx.fillStyle = gun.color || "#a1a09d";
+    ctx.strokeStyle = Draw.colors.dark;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, -6);
+    ctx.bezierCurveTo(-9, -11, -5, -14, 0, -15);
+    ctx.bezierCurveTo(5, -14, 9, -11, 8, -6);
+    ctx.bezierCurveTo(10, 0, 9, 8, 5, 11);
+    ctx.bezierCurveTo(1, 14, -1, 14, -5, 11);
+    ctx.bezierCurveTo(-9, 8, -10, 0, -8, -6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#d6c9a3";
+    ctx.fillRect(-3, -12, 6, 5);
+    ctx.fillStyle = "#4d4f4f";
+    ctx.beginPath();
+    ctx.arc(0, -7, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (gun.label === "Cannon") {
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY - 14,
+      gunLength * 0.65,
+      5
+    );
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY + 9,
+      gunLength * 0.65,
+      5
+    );
+  }
+
+  if (gun.label === "Rail") {
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(
+      Player.facing > 0 ? centerX + 10 : centerX - 10 - gunLength,
+      gunY - 2,
+      gunLength * 0.75,
+      3
+    );
+    ctx.beginPath();
+    ctx.arc(Player.facing > 0 ? centerX + 18 : centerX - 18, gunY, 5, 0, Math.PI * 2);
     ctx.fill();
   }
 

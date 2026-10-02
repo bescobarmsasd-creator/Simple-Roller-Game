@@ -16,6 +16,10 @@ var Player = {
   angle: 0,        // how far the circle has rolled, for drawing the dot
   facing: 1,       // which way the player is aiming
   gun: "blaster",
+  gunOrder: ["blaster", "scatter", "burst", "plasma", "pulse", "nova", "cannon", "rail", "grenade"],
+  ammo: 0,
+  reserveAmmo: 0,
+  reloadTimer: 0,
   fireCooldown: 0,  // frames until the next shot can fire
   projectiles: [], // active bullets
   smokePuffs: [],  // short-lived smoke from the player's cannon
@@ -41,6 +45,9 @@ Player.reset = function () {
   Player.angle = 0;
   Player.facing = 1;
   Player.gun = Player.gun || "blaster";
+  Player.ammo = 0;
+  Player.reserveAmmo = 0;
+  Player.reloadTimer = 0;
   Player.fireCooldown = 0;
   Player.projectiles = [];
   Player.smokePuffs = [];
@@ -58,8 +65,43 @@ Player.reset = function () {
 
 Player.setGun = function (gunName) {
   if (!CONFIG.GUN_PRESETS[gunName]) { return; }
+  var gun = CONFIG.GUN_PRESETS[gunName];
   Player.gun = gunName;
   Player.fireCooldown = 0;
+  Player.reloadTimer = 0;
+
+  if (gun.magazine) {
+    if (Player.ammo <= 0 && Player.reserveAmmo <= 0) {
+      Player.ammo = gun.magazine;
+      Player.reserveAmmo = gun.reserve || gun.magazine * 3;
+    }
+  } else {
+    Player.ammo = 0;
+    Player.reserveAmmo = 0;
+  }
+};
+
+Player.applyPowerUp = function () {
+  var currentIndex = Player.gunOrder.indexOf(Player.gun);
+  if (currentIndex === -1) { currentIndex = 0; }
+  var nextIndex = (currentIndex + 1) % Player.gunOrder.length;
+  Player.setGun(Player.gunOrder[nextIndex]);
+  if (Game && Game.showMessage) {
+    Game.showMessage("Power up! " + CONFIG.GUN_PRESETS[Player.gun].label + " online.");
+  }
+};
+
+Player.reloadWeapon = function () {
+  var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+  if (!gun.magazine || Player.reloadTimer > 0 || Player.ammo >= gun.magazine) { return; }
+
+  if (Player.reserveAmmo <= 0 && Player.ammo <= 0) {
+    if (Game && Game.showMessage) { Game.showMessage("Out of ammo."); }
+    return;
+  }
+
+  Player.reloadTimer = gun.reloadTime || 30;
+  if (Game && Game.showMessage) { Game.showMessage(gun.label + " reloading..."); }
 };
 
 Player.shoot = function () {
@@ -81,7 +123,10 @@ Player.shoot = function () {
       life: 0,
       maxLife: gun.bulletLife || CONFIG.BULLET_LIFE,
       color: gun.color || "#ffd166",
-      damage: gun.damage || 1
+      damage: gun.damage || 1,
+      explosive: !!gun.explosive,
+      fuse: gun.fuse || 42,
+      blastRadius: gun.blastRadius || 40
     };
 
     Player.projectiles.push(bullet);
@@ -112,11 +157,59 @@ Player.startExplosion = function () {
   };
 };
 
+Player.triggerExplosion = function (x, y, radius, damage) {
+  Player.explosion = {
+    x: x,
+    y: y,
+    life: 0,
+    maxLife: 22,
+    radius: radius,
+    damage: damage
+  };
+
+  for (var i = 0; i < Level.bots.length; i++) {
+    var bot = Level.bots[i];
+    if (!bot.alive) { continue; }
+    var dx = (bot.x + bot.w / 2) - x;
+    var dy = (bot.y + bot.h / 2) - y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < radius) {
+      if (bot.isBoss) {
+        bot.hp = (bot.hp || 1) - 1;
+        if (bot.hp <= 0) {
+          bot.alive = false;
+        }
+      } else {
+        bot.alive = false;
+      }
+    }
+  }
+};
+
 Player.updateExplosion = function () {
   if (!Player.explosion) { return; }
   Player.explosion.life = Player.explosion.life + 1;
   if (Player.explosion.life > Player.explosion.maxLife) {
     Player.explosion = null;
+  }
+};
+
+Player.updatePowerUps = function () {
+  for (var i = Level.powerUps.length - 1; i >= 0; i--) {
+    var pickup = Level.powerUps[i];
+    if (Collide.boxesOverlap(
+      Player.x,
+      Player.y,
+      CONFIG.PLAYER_SIZE,
+      CONFIG.PLAYER_SIZE,
+      pickup.x,
+      pickup.y,
+      pickup.w,
+      pickup.h
+    )) {
+      Player.applyPowerUp();
+      Level.powerUps.splice(i, 1);
+    }
   }
 };
 
@@ -127,12 +220,21 @@ Player.updateProjectiles = function () {
     bullet.y = bullet.y + bullet.vy;
     bullet.life = bullet.life + 1;
 
+    if (bullet.explosive && bullet.life >= (bullet.fuse || 42)) {
+      Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
+      Player.projectiles.splice(i, 1);
+      continue;
+    }
+
     if (bullet.life > bullet.maxLife || bullet.x < -40 || bullet.x > Level.pixelWidth() + 40 || bullet.y < -40 || bullet.y > CONFIG.CANVAS_H + 40) {
       Player.projectiles.splice(i, 1);
       continue;
     }
 
     if (Collide.hitsSolid(bullet.x - bullet.radius, bullet.y - bullet.radius, bullet.radius * 2, bullet.radius * 2)) {
+      if (bullet.explosive) {
+        Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
+      }
       Player.projectiles.splice(i, 1);
       continue;
     }
@@ -150,13 +252,17 @@ Player.updateProjectiles = function () {
         bot.w,
         bot.h
       )) {
-        if (bot.isBoss) {
-          bot.hp = (bot.hp || 1) - 1;
-          if (bot.hp <= 0) {
+        if (bullet.explosive) {
+          Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
+        } else {
+          if (bot.isBoss) {
+            bot.hp = (bot.hp || 1) - 1;
+            if (bot.hp <= 0) {
+              bot.alive = false;
+            }
+          } else {
             bot.alive = false;
           }
-        } else {
-          bot.alive = false;
         }
         Player.projectiles.splice(i, 1);
         break;
@@ -267,7 +373,33 @@ Player.update = function () {
   }
 
   var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
+
+  if (Player.reloadTimer > 0) {
+    Player.reloadTimer = Player.reloadTimer - 1;
+    if (Player.reloadTimer <= 0) {
+      var needed = (gun.magazine || 0) - Player.ammo;
+      var loaded = Math.min(needed, Player.reserveAmmo);
+      Player.ammo = Player.ammo + loaded;
+      Player.reserveAmmo = Player.reserveAmmo - loaded;
+      if (Game && Game.showMessage) { Game.showMessage(gun.label + ": " + Player.ammo + "/" + (gun.magazine || Player.ammo)); }
+    }
+  }
+
+  if (Input.reload && Player.reloadTimer <= 0 && gun.magazine && Player.ammo < gun.magazine) {
+    Player.reloadWeapon();
+  }
+
   if (Input.fire && Player.fireCooldown <= 0) {
+    if (gun.magazine) {
+      if (Player.reloadTimer > 0) {
+        return;
+      }
+      if (Player.ammo <= 0) {
+        Player.reloadWeapon();
+        return;
+      }
+      Player.ammo = Player.ammo - 1;
+    }
     Player.shoot();
     Player.fireCooldown = gun.cooldown || CONFIG.SHOOT_COOLDOWN;
   }

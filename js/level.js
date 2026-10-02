@@ -20,7 +20,8 @@ var Level = {
   enemies: [],      // all enemy targets placed in the current level
   bots: [],         // hostile bots that move and attack
   boss: null,      // the optional final boss for the level
-  fallingSpikes: []
+  fallingSpikes: [],
+  powerUps: []
 };
 
 // --- STEP 1: read the two data files ----------------------------------
@@ -53,6 +54,7 @@ Level.build = function (levelNumber) {
   Level.bots = [];
   Level.boss = null;
   Level.fallingSpikes = [];
+  Level.powerUps = [];
 
   // start with 10 empty rows
   for (var row = 0; row < CONFIG.ROWS; row++) {
@@ -77,6 +79,7 @@ Level.build = function (levelNumber) {
   Level.findStart();
   Level.findEnemies();
   Level.findFallingSpikes();
+  Level.spawnPowerUps();
   Level.spawnBots();
 };
 
@@ -161,6 +164,19 @@ Level.updateFallingSpikes = function () {
       spike.triggered = false;
     }
   }
+};
+
+Level.spawnPowerUps = function () {
+  var laneX = Math.max(180, Math.min(Level.pixelWidth() * 0.45, Level.pixelWidth() - 220));
+  var laneY = 120;
+  Level.powerUps = [{
+    x: laneX,
+    y: laneY,
+    w: 18,
+    h: 18,
+    pulse: 0,
+    type: "gun"
+  }];
 };
 
 Level.spawnBots = function () {

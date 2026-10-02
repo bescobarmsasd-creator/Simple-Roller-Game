@@ -106,6 +106,7 @@ Game.update = function () {
   }
 
   Player.update();
+  Player.updatePowerUps();
 
   if (Player.isDead()) {
     Game.mode = "dead";

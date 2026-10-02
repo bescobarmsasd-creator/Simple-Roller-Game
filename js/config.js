@@ -144,6 +144,20 @@ CONFIG.GUN_PRESETS = {
     damage: 1,
     color: "#ffd166"
   },
+  rifle: {
+    label: "Rifle",
+    cooldown: 6,
+    bulletSpeed: 12,
+    bulletSize: 5,
+    bulletLife: 90,
+    pellets: 1,
+    spread: 0.03,
+    damage: 2,
+    color: "#70e000",
+    magazine: 12,
+    reserve: 48,
+    reloadTime: 34
+  },
   scatter: {
     label: "Scatter",
     cooldown: 12,
@@ -176,6 +190,69 @@ CONFIG.GUN_PRESETS = {
     spread: 0.12,
     damage: 1,
     color: "#90be6d"
+  },
+  pulse: {
+    label: "Pulse",
+    cooldown: 6,
+    bulletSpeed: 9,
+    bulletSize: 4,
+    bulletLife: 58,
+    pellets: 2,
+    spread: 0.08,
+    damage: 1,
+    color: "#7bdff2",
+    accent: "#d9f99d"
+  },
+  nova: {
+    label: "Nova",
+    cooldown: 14,
+    bulletSpeed: 10,
+    bulletSize: 5,
+    bulletLife: 82,
+    pellets: 5,
+    spread: 0.34,
+    damage: 1,
+    color: "#c084fc",
+    accent: "#f9c74f"
+  },
+  cannon: {
+    label: "Cannon",
+    cooldown: 18,
+    bulletSpeed: 14,
+    bulletSize: 9,
+    bulletLife: 125,
+    pellets: 1,
+    spread: 0,
+    damage: 3,
+    color: "#f94144",
+    accent: "#ffd166"
+  },
+  rail: {
+    label: "Rail",
+    cooldown: 20,
+    bulletSpeed: 18,
+    bulletSize: 4,
+    bulletLife: 140,
+    pellets: 1,
+    spread: 0,
+    damage: 4,
+    color: "#b7e4c7",
+    accent: "#c7f9cc"
+  },
+  grenade: {
+    label: "Grenade",
+    cooldown: 28,
+    bulletSpeed: 7,
+    bulletSize: 7,
+    bulletLife: 80,
+    pellets: 1,
+    spread: 0,
+    damage: 5,
+    color: "#ff6b6b",
+    accent: "#ffd166",
+    explosive: true,
+    fuse: 42,
+    blastRadius: 56
   }
 };
 
