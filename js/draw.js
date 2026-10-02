@@ -100,16 +100,16 @@ Draw.explosion = function () {
   var explosion = Player.explosion;
   var progress = explosion.life / explosion.maxLife;
   var fade = 1 - progress;
-  var outerRadius = 10 + progress * 30;
+  var outerRadius = explosion.radius ? explosion.radius * (0.25 + progress * 0.75) : 10 + progress * 30;
 
   ctx.save();
   ctx.globalAlpha = fade;
-  ctx.fillStyle = Draw.colors.lava;
+  ctx.fillStyle = explosion.blast ? "#ff9f1c" : Draw.colors.lava;
   ctx.beginPath();
   ctx.arc(explosion.x, explosion.y, outerRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = Draw.colors.sun;
+  ctx.fillStyle = explosion.blast ? "#ffd166" : Draw.colors.sun;
   ctx.beginPath();
   ctx.arc(explosion.x, explosion.y, outerRadius * 0.55, 0, Math.PI * 2);
   ctx.fill();
@@ -262,53 +262,9 @@ Draw.powerUps = function () {
   }
 };
 
-Draw.grenade = function (x, y, size, color) {
-  var ctx = Draw.ctx;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = color || "#8b8a7a";
-  ctx.strokeStyle = Draw.colors.dark;
-  ctx.lineWidth = 2;
-
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.8, -size * 0.35);
-  ctx.bezierCurveTo(-size * 0.86, -size * 0.78, -size * 0.35, -size * 0.95, 0, -size * 0.98);
-  ctx.bezierCurveTo(size * 0.35, -size * 0.95, size * 0.86, -size * 0.78, size * 0.8, -size * 0.35);
-  ctx.bezierCurveTo(size * 0.92, -size * 0.1, size * 0.94, size * 0.55, size * 0.68, size * 0.82);
-  ctx.bezierCurveTo(size * 0.42, size * 1.02, -size * 0.42, size * 1.02, -size * 0.68, size * 0.82);
-  ctx.bezierCurveTo(-size * 0.94, size * 0.55, -size * 0.92, -size * 0.1, -size * 0.8, -size * 0.35);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = "#d9d0b6";
-  ctx.fillRect(-size * 0.16, -size * 0.9, size * 0.32, size * 0.18);
-  ctx.fillStyle = "#c9c1a5";
-  ctx.fillRect(-size * 0.12, -size * 0.7, size * 0.24, size * 0.22);
-
-  ctx.fillStyle = "#4d4f4f";
-  ctx.beginPath();
-  ctx.arc(0, -size * 0.5, size * 0.18, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "#d8c17d";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.18, -size * 0.96);
-  ctx.lineTo(size * 0.18, -size * 0.96);
-  ctx.stroke();
-
-  ctx.restore();
-};
-
 Draw.projectiles = function () {
   for (var i = 0; i < Player.projectiles.length; i++) {
     var b = Player.projectiles[i];
-    if (b.explosive) {
-      Draw.grenade(b.x, b.y, (b.radius || 7) + 2, b.color || "#a1a09d");
-      continue;
-    }
-
     Draw.ctx.fillStyle = b.color || Draw.colors.sun;
     Draw.ctx.strokeStyle = Draw.colors.dark;
     Draw.ctx.lineWidth = 1;
@@ -545,31 +501,6 @@ Draw.player = function () {
     ctx.beginPath();
     ctx.arc(Player.facing > 0 ? centerX + 18 : centerX - 18, gunY, 6, 0, Math.PI * 2);
     ctx.fill();
-  }
-
-  if (gun.label === "Grenade") {
-    ctx.save();
-    ctx.translate(Player.facing > 0 ? centerX + 16 : centerX - 16, gunY);
-    ctx.fillStyle = gun.color || "#a1a09d";
-    ctx.strokeStyle = Draw.colors.dark;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-8, -6);
-    ctx.bezierCurveTo(-9, -11, -5, -14, 0, -15);
-    ctx.bezierCurveTo(5, -14, 9, -11, 8, -6);
-    ctx.bezierCurveTo(10, 0, 9, 8, 5, 11);
-    ctx.bezierCurveTo(1, 14, -1, 14, -5, 11);
-    ctx.bezierCurveTo(-9, 8, -10, 0, -8, -6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#d6c9a3";
-    ctx.fillRect(-3, -12, 6, 5);
-    ctx.fillStyle = "#4d4f4f";
-    ctx.beginPath();
-    ctx.arc(0, -7, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 
   if (gun.label === "Cannon") {

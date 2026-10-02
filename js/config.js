@@ -158,6 +158,23 @@ CONFIG.GUN_PRESETS = {
     reserve: 48,
     reloadTime: 34
   },
+  grenade: {
+    label: "Grenade",
+    cooldown: 26,
+    bulletSpeed: 7,
+    bulletSize: 7,
+    bulletLife: 120,
+    pellets: 1,
+    spread: 0,
+    damage: 3,
+    color: "#ff7b00",
+    magazine: 3,
+    reserve: 12,
+    reloadTime: 28,
+    type: "grenade",
+    blastRadius: 42,
+    fuse: 48
+  },
   scatter: {
     label: "Scatter",
     cooldown: 12,
@@ -238,21 +255,6 @@ CONFIG.GUN_PRESETS = {
     damage: 4,
     color: "#b7e4c7",
     accent: "#c7f9cc"
-  },
-  grenade: {
-    label: "Grenade",
-    cooldown: 28,
-    bulletSpeed: 7,
-    bulletSize: 7,
-    bulletLife: 80,
-    pellets: 1,
-    spread: 0,
-    damage: 5,
-    color: "#ff6b6b",
-    accent: "#ffd166",
-    explosive: true,
-    fuse: 42,
-    blastRadius: 56
   }
 };
 

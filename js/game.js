@@ -106,6 +106,7 @@ Game.update = function () {
   }
 
   Player.update();
+  Player.updateExplosion();
   Player.updatePowerUps();
 
   if (Player.isDead()) {

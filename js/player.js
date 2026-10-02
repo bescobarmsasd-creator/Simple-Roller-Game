@@ -16,7 +16,7 @@ var Player = {
   angle: 0,        // how far the circle has rolled, for drawing the dot
   facing: 1,       // which way the player is aiming
   gun: "blaster",
-  gunOrder: ["blaster", "scatter", "burst", "plasma", "pulse", "nova", "cannon", "rail", "grenade"],
+  gunOrder: ["blaster", "rifle", "grenade", "scatter", "burst", "plasma", "pulse", "nova", "cannon", "rail"],
   ammo: 0,
   reserveAmmo: 0,
   reloadTimer: 0,
@@ -104,6 +104,34 @@ Player.reloadWeapon = function () {
   if (Game && Game.showMessage) { Game.showMessage(gun.label + " reloading..."); }
 };
 
+Player.explode = function (x, y, radius, damage) {
+  Player.explosion = {
+    x: x,
+    y: y,
+    life: 0,
+    maxLife: 26,
+    radius: radius || 36,
+    damage: damage || 1,
+    blast: true
+  };
+
+  for (var i = 0; i < Level.bots.length; i++) {
+    var bot = Level.bots[i];
+    if (!bot.alive) { continue; }
+    var centerX = bot.x + bot.w / 2;
+    var centerY = bot.y + bot.h / 2;
+    var dist = Math.sqrt((centerX - x) * (centerX - x) + (centerY - y) * (centerY - y));
+    if (dist <= radius) {
+      if (bot.isBoss) {
+        bot.hp = (bot.hp || 1) - 1;
+        if (bot.hp <= 0) { bot.alive = false; }
+      } else {
+        bot.alive = false;
+      }
+    }
+  }
+};
+
 Player.shoot = function () {
   var gun = CONFIG.GUN_PRESETS[Player.gun] || CONFIG.GUN_PRESETS.blaster;
   var pelletCount = gun.pellets || 1;
@@ -124,10 +152,16 @@ Player.shoot = function () {
       maxLife: gun.bulletLife || CONFIG.BULLET_LIFE,
       color: gun.color || "#ffd166",
       damage: gun.damage || 1,
-      explosive: !!gun.explosive,
-      fuse: gun.fuse || 42,
-      blastRadius: gun.blastRadius || 40
+      isGrenade: gun.type === "grenade",
+      blastRadius: gun.blastRadius || 36,
+      fuse: gun.fuse || 48,
+      gravity: gun.type === "grenade" ? 0.18 : 0
     };
+
+    if (gun.type === "grenade") {
+      bullet.vy = -3.5;
+      bullet.vx = Player.facing * (gun.bulletSpeed || 7);
+    }
 
     Player.projectiles.push(bullet);
     Player.smokePuffs.push({
@@ -155,35 +189,6 @@ Player.startExplosion = function () {
     life: 0,
     maxLife: 36
   };
-};
-
-Player.triggerExplosion = function (x, y, radius, damage) {
-  Player.explosion = {
-    x: x,
-    y: y,
-    life: 0,
-    maxLife: 22,
-    radius: radius,
-    damage: damage
-  };
-
-  for (var i = 0; i < Level.bots.length; i++) {
-    var bot = Level.bots[i];
-    if (!bot.alive) { continue; }
-    var dx = (bot.x + bot.w / 2) - x;
-    var dy = (bot.y + bot.h / 2) - y;
-    var dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < radius) {
-      if (bot.isBoss) {
-        bot.hp = (bot.hp || 1) - 1;
-        if (bot.hp <= 0) {
-          bot.alive = false;
-        }
-      } else {
-        bot.alive = false;
-      }
-    }
-  }
 };
 
 Player.updateExplosion = function () {
@@ -216,15 +221,48 @@ Player.updatePowerUps = function () {
 Player.updateProjectiles = function () {
   for (var i = Player.projectiles.length - 1; i >= 0; i--) {
     var bullet = Player.projectiles[i];
+    if (bullet.isGrenade) {
+      bullet.vy = bullet.vy + bullet.gravity;
+      bullet.x = bullet.x + bullet.vx;
+      bullet.y = bullet.y + bullet.vy;
+      bullet.life = bullet.life + 1;
+
+      if (bullet.life > bullet.fuse || bullet.x < -40 || bullet.x > Level.pixelWidth() + 40 || bullet.y < -40 || bullet.y > CONFIG.CANVAS_H + 40) {
+        Player.explode(bullet.x, bullet.y, bullet.blastRadius || 36, bullet.damage || 3);
+        Player.projectiles.splice(i, 1);
+        continue;
+      }
+
+      if (Collide.hitsSolid(bullet.x - bullet.radius, bullet.y - bullet.radius, bullet.radius * 2, bullet.radius * 2)) {
+        Player.explode(bullet.x, bullet.y, bullet.blastRadius || 36, bullet.damage || 3);
+        Player.projectiles.splice(i, 1);
+        continue;
+      }
+
+      for (var e = Level.bots.length - 1; e >= 0; e--) {
+        var bot = Level.bots[e];
+        if (!bot.alive) { continue; }
+        if (Collide.boxesOverlap(
+          bullet.x - bullet.radius,
+          bullet.y - bullet.radius,
+          bullet.radius * 2,
+          bullet.radius * 2,
+          bot.x,
+          bot.y,
+          bot.w,
+          bot.h
+        )) {
+          Player.explode(bullet.x, bullet.y, bullet.blastRadius || 36, bullet.damage || 3);
+          Player.projectiles.splice(i, 1);
+          break;
+        }
+      }
+      continue;
+    }
+
     bullet.x = bullet.x + bullet.vx;
     bullet.y = bullet.y + bullet.vy;
     bullet.life = bullet.life + 1;
-
-    if (bullet.explosive && bullet.life >= (bullet.fuse || 42)) {
-      Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
-      Player.projectiles.splice(i, 1);
-      continue;
-    }
 
     if (bullet.life > bullet.maxLife || bullet.x < -40 || bullet.x > Level.pixelWidth() + 40 || bullet.y < -40 || bullet.y > CONFIG.CANVAS_H + 40) {
       Player.projectiles.splice(i, 1);
@@ -232,9 +270,6 @@ Player.updateProjectiles = function () {
     }
 
     if (Collide.hitsSolid(bullet.x - bullet.radius, bullet.y - bullet.radius, bullet.radius * 2, bullet.radius * 2)) {
-      if (bullet.explosive) {
-        Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
-      }
       Player.projectiles.splice(i, 1);
       continue;
     }
@@ -252,17 +287,13 @@ Player.updateProjectiles = function () {
         bot.w,
         bot.h
       )) {
-        if (bullet.explosive) {
-          Player.triggerExplosion(bullet.x, bullet.y, bullet.blastRadius || 40, bullet.damage || 3);
-        } else {
-          if (bot.isBoss) {
-            bot.hp = (bot.hp || 1) - 1;
-            if (bot.hp <= 0) {
-              bot.alive = false;
-            }
-          } else {
+        if (bot.isBoss) {
+          bot.hp = (bot.hp || 1) - 1;
+          if (bot.hp <= 0) {
             bot.alive = false;
           }
+        } else {
+          bot.alive = false;
         }
         Player.projectiles.splice(i, 1);
         break;
