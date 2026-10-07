@@ -130,13 +130,13 @@ Level.findFallingSpikes = function () {
       if (Level.charAt(col, row) === "!") {
         Level.fallingSpikes.push({
           x: col * CONFIG.TILE + 6,
-          y: row * CONFIG.TILE + 2,
+          y: -18,
           w: 18,
           h: 18,
           vy: 0,
           triggerX: col * CONFIG.TILE,
           triggered: false,
-          baseY: row * CONFIG.TILE + 2
+          baseY: -18
         });
         Level.grid[row] = Level.grid[row].slice(0, col) + "." + Level.grid[row].slice(col + 1);
       }
@@ -156,7 +156,14 @@ Level.updateFallingSpikes = function () {
     }
 
     spike.vy = spike.vy + 0.6;
-    spike.y = spike.y + spike.vy;
+    var fallSteps = Math.ceil(spike.vy);
+    for (var step = 0; step < fallSteps; step++) {
+      if (Collide.hitsSolid(spike.x, spike.y + 1, spike.w, spike.h)) {
+        spike.vy = 0;
+        break;
+      }
+      spike.y = spike.y + 1;
+    }
 
     if (spike.y > CONFIG.CANVAS_H + 50) {
       spike.y = spike.baseY;
